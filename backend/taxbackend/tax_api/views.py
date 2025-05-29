@@ -1,8 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+
 from .serializers import UserSerializer
+from .permissions import IsVendor
+
 
 class RegisterAPI(APIView):
     def post(self, request):
@@ -17,9 +22,9 @@ class RegisterAPI(APIView):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class LoginAPI(APIView):
     def post(self, request):
-        from django.contrib.auth import authenticate
         user = authenticate(
             username=request.data.get('username'),
             password=request.data.get('password')
@@ -35,3 +40,10 @@ class LoginAPI(APIView):
             {'error': 'Invalid Credentials'},
             status=status.HTTP_401_UNAUTHORIZED
         )
+
+
+class VendorDashboardAPI(APIView):
+    permission_classes = [IsAuthenticated, IsVendor]
+
+    def get(self, request):
+        return Response({"message": "Welcome Vendor!"})
