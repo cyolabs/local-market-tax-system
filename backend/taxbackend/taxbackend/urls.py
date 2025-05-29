@@ -17,8 +17,22 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include  
+from django.http import HttpResponse
+
+
+def home(request):
+    return HttpResponse("""
+        <h1>Market Tax System API</h1>
+        <p>Available endpoints:</p>
+        <ul>
+            <li><a href="/api/register/">/api/register/</a> - User registration</li>
+            <li><a href="/api/login/">/api/login/</a> - User login</li>
+            <li><a href="/admin/">/admin/</a> - Admin panel</li>
+        </ul>
+    """)
 
 urlpatterns = [
+    path('', home, name='home'), 
     path('admin/', admin.site.urls),
     path('api/', include('tax_api.urls')), 
 ]
