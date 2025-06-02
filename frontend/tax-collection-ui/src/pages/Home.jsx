@@ -35,7 +35,7 @@ export default function Home() {
           {/* Hero Image */}
           <div className="col-md-6 mt-4 mt-md-0 text-center">
             <img
-              src="/hero-image.jpg"
+              src="/hero.png"
               alt="Tax illustration"
               className="img-fluid rounded custom-shadow"
             />
@@ -50,7 +50,7 @@ export default function Home() {
         </h4>
         <div className="row align-items-center">
           <div className="col-md-6 text-center mb-4 mb-md-0">
-            <img src="/chart-image.jpg" alt="Chart" className="img-fluid rounded shadow-sm" />
+            <img src="/chart.png" alt="Chart" className="img-fluid rounded shadow-sm" />
           </div>
           <div className="col-md-6">
             <h5 className="text-success fw-bold mb-2">✅ Reliable and Secure</h5>
