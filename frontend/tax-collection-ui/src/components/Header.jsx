@@ -1,7 +1,7 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.css'; // Make sure bootstrap-icons is installed
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css"; // Make sure bootstrap-icons is installed
 
 const Header = () => {
   const { currentUser, logout } = useAuth();
@@ -9,7 +9,7 @@ const Header = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
@@ -23,7 +23,7 @@ const Header = () => {
         {currentUser ? (
           <>
             <Link to="/profile" className="btn btn-outline-primary me-2">
-              <i className="bi bi-person-circle"></i> {currentUser?.username || 'Profile'}
+              <i className="bi bi-person-circle"></i> {currentUser.username}
             </Link>
             <button onClick={handleLogout} className="btn btn-danger">
               Logout

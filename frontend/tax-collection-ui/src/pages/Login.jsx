@@ -1,13 +1,53 @@
+// src/pages/LoginPage.jsx
 import React from 'react';
-import { PersonFill, LockFill, Building } from 'react-bootstrap-icons';
+import LoginForm from '../components/LoginForm';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../custom.css';
 
-const Login = () => {
+export default function LoginPage() {
+  const handleLogin = async (data) => {
+    try {
+      const response = await fetch('http://localhost:8000/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: data.username,
+          password: data.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        const { access, refresh, user_type, username } = result;
+
+        // Save tokens and role
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
+        localStorage.setItem('user_role', user_type);
+        localStorage.setItem('username', username);
+
+        // Redirect user based on role
+        if (user_type === 'superadmin') {
+          window.location.href = '/superadmin-dashboard';
+        } else if (user_type === 'admin') {
+          window.location.href = '/admin-dashboard';
+        } else if (user_type === 'vendor') {
+          window.location.href = '/vendor-dashboard';
+        } else {
+          alert('Unknown role. Contact support.');
+        }
+      } else {
+        alert('Login failed: ' + (result.detail || JSON.stringify(result)));
+      }
+    } catch (error) {
+      alert('Network error. Please try again.');
+    }
+  };
+
   return (
     <div className="signup-container">
-      {/* Left Side */}
       <div className="signup-left">
         <div className="logo-circle">
           <img src="/logo.png" alt="Logo" className="logo-icon" />
@@ -22,38 +62,16 @@ const Login = () => {
         <p>Simplify Your Local Tax Payments</p>
       </div>
 
-      {/* Right Side */}
       <div className="signup-right">
         <div className="admin-logo-circle">
           <img src="/icon.png" alt="Building Icon" className="building-icon" />
         </div>
         <h2>Admin Login</h2>
-        <form className="signup-form">
-          <div className="input-group">
-            <PersonFill className="icon" />
-            <input type="text" placeholder="Username" required />
-          </div>
-          <div className="input-group">
-            <LockFill className="icon" />
-            <input type="password" placeholder="Password" required />
-          </div>
-
-          <div className="d-flex justify-content-between w-100 mb-3">
-            <div className="form-check">
-              <input type="checkbox" className="form-check-input" id="remember" />
-              <label className="form-check-label" htmlFor="remember">
-                Remember me
-              </label>
-            </div>
-            <a href="#" className="text-primary small text-decoration-none">Forgot password?</a>
-          </div>
-
-          <button type="submit" className="signup-btn">Login</button>
-        </form>
-        <p className="login-link">Don’t have an account? <a href="/register">Sign up</a></p>
+        <LoginForm onSubmit={handleLogin} />
+        <p className="login-link">
+          Don’t have an account? <a href="/register">Sign up</a>
+        </p>
       </div>
     </div>
   );
-};
-
-export default Login;
+}

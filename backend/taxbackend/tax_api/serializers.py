@@ -31,7 +31,6 @@ class UserSerializer(serializers.ModelSerializer):
         validated_data.pop('password2')
         role = validated_data.get('role', 'vendor')
         user = User.objects.create_user(
-            is_vendor=True,
             **validated_data,
             role=role
         )
