@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'username', 'password', 'password2',
             'full_name', 'national_id', 'business_type',
-            'gender', 'email'
+            'gender', 'email','role'
         ]
         extra_kwargs = {
             'national_id': {'required': True},
@@ -29,8 +29,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password2')
+        role = validated_data.get('role', 'vendor')
         user = User.objects.create_user(
             is_vendor=True,
-            **validated_data
+            **validated_data,
+            role=role
         )
         return user

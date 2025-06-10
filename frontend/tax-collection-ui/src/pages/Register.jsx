@@ -12,9 +12,10 @@ function Signup() {
         </div>
         <h2>Local market Tax collection System</h2>
         <img
-          src="/market-illustration.png"
+          src="market-illustration.jpg"
           alt="Market Illustration"
           className="illustration"
+          style={{ minWidth: '500px' }}
         />
         <p>Simplify Your Local Tax Payments</p>
       </div>
@@ -22,7 +23,7 @@ function Signup() {
       {/* Right Side */}
       <div className="signup-right">
         <div className="admin-logo-circle">
-          <img src="/building-icon.png" alt="Building Icon" className="building-icon" />
+          <img src="icon.png" alt="Building Icon" className="building-icon" />
         </div>
         <h2>Sign Up</h2>
         <form className="signup-form">

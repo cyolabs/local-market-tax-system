@@ -12,6 +12,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.9.0",
     "bootstrap": "^5.2.3",
+    "bootstrap-icons": "^1.13.1",
     "react": "^19.1.0",
     "react-bootstrap": "^2.7.2",
     "react-bootstrap-icons": "^1.11.6",
