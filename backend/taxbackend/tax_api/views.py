@@ -7,7 +7,9 @@ from django.contrib.auth import authenticate
 
 from .serializers import UserSerializer
 from .permissions import IsVendor
-
+from .permissions import IsSuperAdmin
+from .permissions import IsAdmin
+from django.http import JsonResponse
 
 class RegisterAPI(APIView):
     def post(self, request):
@@ -31,10 +33,21 @@ class LoginAPI(APIView):
         )
         if user:
             refresh = RefreshToken.for_user(user)
+
+            if user.is_superadmin:
+                user_type = 'superadmin'
+            elif user.is_admin:
+                user_type = 'admin'
+            elif user.is_vendor:
+                user_type = 'vendor'
+            else:
+                user_type = 'unknown'
+
             return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-                'user_type': 'vendor' if user.is_vendor else 'officer'
+                'user_type': user_type,
+                'username': user.username
             })
         return Response(
             {'error': 'Invalid Credentials'},
@@ -42,8 +55,21 @@ class LoginAPI(APIView):
         )
 
 
-class VendorDashboardAPI(APIView):
-    permission_classes = [IsAuthenticated, IsVendor]
+
+class SuperAdminDashboardAPI(APIView):
+    permission_classes = [IsSuperAdmin]
 
     def get(self, request):
-        return Response({"message": "Welcome Vendor!"})
+        return Response({"message": "Welcome Super Admin!"})
+
+class AdminDashboardAPI(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        return Response({"message": "Welcome Admin!"})
+
+class VendorDashboardAPI(APIView):
+    permission_classes = [IsVendor]
+
+    def get(self, request):
+        return Response({"message": "Welcome to the vendor dashboard!"})

@@ -5,17 +5,6 @@ import '../custom.css';
 export default function Home() {
   return (
     <div>
-      {/* Navbar */}
-      <nav className="navbar navbar-light bg-light justify-content-between px-4 py-2 shadow-sm">
-        <div className="d-flex align-items-center">
-          <img src="/logo.png" alt="Logo" width="40" className="me-2" />
-          <h5 className="mb-0 fw-bold">Local market Tax collection System</h5>
-        </div>
-        <div>
-          <Link to="/login" className="btn btn-outline-dark me-2">Login</Link>
-          <Link to="/register" className="btn btn-danger">Sign up</Link>
-        </div>
-      </nav>
 
       {/* Hero Section */}
       <div className="container py-5">
