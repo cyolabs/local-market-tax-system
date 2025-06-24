@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: local-market-tax-system
+    env: python
+    plan: free  # You can adjust the plan if needed
+    buildCommand: |
+      cd backend/taxbackend
+      pip install -r ../requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+    startCommand: |
+      cd backend/taxbackend
+      gunicorn taxbackend.wsgi:application
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: your-app-name.onrender.com
