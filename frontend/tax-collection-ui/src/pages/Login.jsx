@@ -66,7 +66,7 @@ export default function LoginPage() {
         <div className="admin-logo-circle">
           <img src="/icon.png" alt="Building Icon" className="building-icon" />
         </div>
-        <h2>Admin Login</h2>
+        <h2>Login</h2>
         <LoginForm onSubmit={handleLogin} />
         <p className="login-link">
           Don’t have an account? <a href="/register">Sign up</a>
