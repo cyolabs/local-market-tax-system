@@ -8,14 +8,14 @@ import '../custom.css';
 export default function LoginPage() {
   const handleLogin = async (data) => {
     try {
-      const response = await fetch('http://localhost:8000/login/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: data.username,
-          password: data.password,
-        }),
-      });
+      const response = await fetch('https://local-market-tax-system-7fuw.onrender.com/login/', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    username: data.username,
+    password: data.password,
+  }),
+});
 
       const result = await response.json();
 
