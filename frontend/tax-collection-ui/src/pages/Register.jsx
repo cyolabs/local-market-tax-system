@@ -3,12 +3,26 @@ import React from 'react';
 import RegisterForm from '../components/RegisterForm';
 
 export default function RegisterPage() {
-  const response = await fetch('https://local-market-tax-system-7fuw.onrender.com/signup/', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(data),
-});
+  const handleRegister = async (data) => {
+    try {
+      const response = await fetch('https://local-market-tax-system-7fuw.onrender.com/signup/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Registration successful!');
+        window.location.href = '/login';
+      } else {
+        alert('Signup failed: ' + JSON.stringify(result));
+      }
+    } catch (error) {
+      alert('Network error. Please try again.');
+    }
+  };
 
   return (
     <div className="signup-container">
