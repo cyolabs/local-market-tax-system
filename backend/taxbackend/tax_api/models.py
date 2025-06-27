@@ -45,8 +45,9 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.full_name} ({self.national_id})"
 
-    is_superuser = models.BooleanField(default=False)
-
     def save(self, *args, **kwargs):
-       self.is_superuser = self.role == 'superadmin'
-       super().save(*args, **kwargs)
+     if self.role == 'superadmin':
+        self.is_superuser = True
+        self.is_staff = True
+     super().save(*args, **kwargs)
+
