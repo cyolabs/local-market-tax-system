@@ -78,9 +78,6 @@ DATABASES = {
     }
 }
 
-# fixing foreign key check error
-DATABASES['default']['OPTIONS']['init_command'] = "SET sql_mode='STRICT_TRANS_TABLES', default_storage_engine=INNODB"
-
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
