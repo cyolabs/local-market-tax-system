@@ -17,8 +17,8 @@ class CustomUserCreationForm(forms.ModelForm):
 class UserAdmin(BaseUserAdmin):
     add_form = CustomUserCreationForm
 
-    list_display = ('username', 'email', 'role', 'is_staff', 'is_active')
-    list_filter = ('role', 'is_staff', 'is_active')
+    list_display = ('username', 'email', 'role', 'is_staff', 'is_active', 'is_superuser')
+    list_filter = ('role', 'is_staff', 'is_active', 'is_superuser')
 
     fieldsets = (
         (None, {'fields': ('username', 'email', 'password')}),
@@ -28,18 +28,11 @@ class UserAdmin(BaseUserAdmin):
     )
 
     add_fieldsets = (
-    (None, {
-        'classes': ('wide',),
-        'fields': ('username', 'email', 'password', 'national_id', 'role', 'is_staff', 'is_active')}
-    ),
-)
-    def save_model(self, request, obj, form, change):
-        if form.cleaned_data.get("password") and not change:
-            obj.set_password(form.cleaned_data["password"])
-        elif form.cleaned_data.get("password") and "password" in form.changed_data:
-            obj.set_password(form.cleaned_data["password"])
-        obj.save()
-
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'email', 'password', 'national_id', 'role', 'is_staff', 'is_active', 'is_superuser')}
+        ),
+    )
 
     search_fields = ('email', 'username', 'national_id')
     ordering = ('email',)
