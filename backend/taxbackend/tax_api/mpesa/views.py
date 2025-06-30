@@ -91,3 +91,4 @@ class MpesaCallbackView(APIView):
         except Exception as e:
             logger.error(f"Error processing M-Pesa callback: {str(e)}")
             return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+

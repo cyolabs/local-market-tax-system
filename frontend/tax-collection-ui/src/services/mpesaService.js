@@ -1,17 +1,14 @@
 import api from './api';
 
-export const initiateSTKPush = async (phoneNumber, amount, accountReference = 'TAX_PAYMENT', transactionDesc = 'Tax Payment') => {
+export const initiateSTKPush = async (phoneNumber, amount) => {
   try {
     const response = await api.post('/api/mpesa/initiate-stk-push/', {
       phone_number: phoneNumber,
-      amount,
-      account_reference: accountReference,
-      transaction_desc: transactionDesc
+      amount: parseFloat(amount),  // Ensure number format
     });
     return response.data;
   } catch (error) {
-    console.error('Error initiating STK push:', error);
-    throw error;
+    throw new Error(error.response?.data?.message || "Payment failed");
   }
 };
 
