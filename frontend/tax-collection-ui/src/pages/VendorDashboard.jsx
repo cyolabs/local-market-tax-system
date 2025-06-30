@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Container, Row, Col, Card, Button, ListGroup } from "react-bootstrap";
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const categories = [
   { title: "Fresh products traders", image: "/images/fresh.jpg" },
@@ -11,6 +13,14 @@ const categories = [
 ];
 
 const VendorDashboard = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!localStorage.getItem('access_token')) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
   const [activeSection, setActiveSection] = useState("payments");
 
   const renderContent = () => {
