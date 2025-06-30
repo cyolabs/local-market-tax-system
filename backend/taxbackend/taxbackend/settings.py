@@ -129,10 +129,25 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = True  
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000", 
+    "https://local-market-tax-system-frontend.onrender.com"
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY') 
 MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET')
-MPESA_BUSINESS_SHORTCODE = os.getenv('174379')
-MPESA_PASSKEY = os.getenv('bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')
+MPESA_BUSINESS_SHORTCODE = '174379'
+MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
 MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL', 'https://local-market-tax-system-7fuw.onrender.com/api/mpesa/callback/')
