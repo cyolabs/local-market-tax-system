@@ -5,10 +5,12 @@ const PrivateRoute = () => {
   const { currentUser, loading } = useAuth();
 
   if (loading) {
-    return <div className="text-center mt-5">Checking authentication...</div>;
+    return <div>Loading...</div>;
   }
 
-  return currentUser ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+  return <Outlet />;
 };
-
 export default PrivateRoute;
