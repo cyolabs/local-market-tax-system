@@ -5,37 +5,31 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import '../custom.css';
 
 export default function LoginPage() {
-  const handleLogin = async (data) => {
+ const handleLogin = async (data) => {
   try {
-    console.log("Attempting login with:", data);
     const response = await fetch('https://local-market-tax-system-7fuw.onrender.com/login/', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',  // For cookies if using them
-      body: JSON.stringify({
-        username: data.username,
-        password: data.password
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Login failed');
-    }
-
     const result = await response.json();
-    console.log("Login success:", result);
-    
-    // Store tokens and redirect
-    localStorage.setItem('access_token', result.access);
-    localStorage.setItem('refresh_token', result.refresh);
-    window.location.href = result.role === 'admin' ? '/admin-dashboard' : '/vendor-dashboard';
-    
+
+    if (response.ok) {
+      // Store all necessary data
+      localStorage.setItem('access_token', result.access);
+      localStorage.setItem('refresh_token', result.refresh);
+      localStorage.setItem('username', result.username);
+      localStorage.setItem('user_role', result.role);
+      
+      // Force full page reload to reset app state
+      window.location.href = result.role === 'admin' 
+        ? '/admin-dashboard' 
+        : '/vendor-dashboard';
+    }
   } catch (error) {
-    console.error("Login error:", error);
-    alert(error.message || 'Login failed. Please try again.');
+    console.error('Login error:', error);
+    alert('Login failed. Please try again.');
   }
 };
 
