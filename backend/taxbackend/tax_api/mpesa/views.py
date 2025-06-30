@@ -4,10 +4,13 @@ from rest_framework import status
 from .client import MpesaClient
 from ..models import PaymentTransaction
 from ..serializers import PaymentTransactionSerializer
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import permission_classes
 import logging
 
 logger = logging.getLogger(__name__)
-
+@permission_classes([AllowAny])
+@csrf_exempt
 class InitiateSTKPushView(APIView):
     def post(self, request):
         try:
