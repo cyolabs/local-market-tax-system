@@ -10,8 +10,6 @@ def home(request):
             <li><a href="/signup/">/signup/</a> - User registration</li>
             <li><a href="/login/">/login/</a> - User login</li>
             <li><a href="/admin/">Admin Panel</a></li>
-            <li><a href="/vendor/dashboard/">Vendor Dashboard</a></li>
-            <li><a href="/admin/">Admin Panel</a></li>
         </ul>
     """)
 

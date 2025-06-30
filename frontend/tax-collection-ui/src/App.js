@@ -4,7 +4,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VendorDashboard from "./pages/VendorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import MainLayout from "./components/MainLayout";
 import PrivateRoute from "./routes/PrivateRoute";
 
@@ -21,7 +20,6 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/vendor-dashboard" element={<VendorDashboard />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/superadmin-dashboard" element={<SuperAdminDashboard />} />
         </Route>
       </Route>
     </Routes>

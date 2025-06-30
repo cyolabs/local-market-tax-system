@@ -9,9 +9,10 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     const username = localStorage.getItem('username');
+    const role = localStorage.getItem('user_role');
 
     if (token && username) {
-      setCurrentUser({ username });
+      setCurrentUser({ username, role });
     }
 
     setLoading(false); // Auth check is done
@@ -22,6 +23,15 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser(null);
   };
 
+  const login = (tokenData) => {
+  localStorage.setItem('access_token', tokenData.access);
+  localStorage.setItem('username', tokenData.username);
+  localStorage.setItem('user_role', tokenData.role); // Add this
+  setCurrentUser({ 
+    username: tokenData.username,
+    role: tokenData.role
+  });
+};
   return (
     <AuthContext.Provider value={{ currentUser, logout, loading }}>
       {children}

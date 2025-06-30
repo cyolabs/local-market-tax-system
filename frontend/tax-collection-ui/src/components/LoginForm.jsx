@@ -1,6 +1,7 @@
 // src/components/LoginForm.jsx
 import React, { useState } from 'react';
 import { PersonFill, LockFill } from 'react-bootstrap-icons';
+import PropTypes from 'prop-types'; // Added for prop validation
 
 export default function LoginForm({ onSubmit }) {
   const [formData, setFormData] = useState({
@@ -9,7 +10,7 @@ export default function LoginForm({ onSubmit }) {
     remember: false,
   });
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -17,9 +18,13 @@ export default function LoginForm({ onSubmit }) {
     }));
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Only submit the fields your backend expects
+    onSubmit({
+      username: formData.username,
+      password: formData.password
+    });
   };
 
   return (
@@ -30,8 +35,10 @@ export default function LoginForm({ onSubmit }) {
           type="text"
           name="username"
           placeholder="Username"
+          value={formData.username}
           required
           onChange={handleChange}
+          autoComplete="username"
         />
       </div>
 
@@ -41,8 +48,10 @@ export default function LoginForm({ onSubmit }) {
           type="password"
           name="password"
           placeholder="Password"
+          value={formData.password}
           required
           onChange={handleChange}
+          autoComplete="current-password"
         />
       </div>
 
@@ -53,6 +62,7 @@ export default function LoginForm({ onSubmit }) {
             className="form-check-input"
             id="remember"
             name="remember"
+            checked={formData.remember}
             onChange={handleChange}
           />
           <label className="form-check-label" htmlFor="remember">
@@ -64,7 +74,14 @@ export default function LoginForm({ onSubmit }) {
         </a>
       </div>
 
-      <button type="submit" className="signup-btn">Login</button>
+      <button type="submit" className="signup-btn">
+        Login
+      </button>
     </form>
   );
 }
+
+// Added prop validation
+LoginForm.propTypes = {
+  onSubmit: PropTypes.func.isRequired,
+};
