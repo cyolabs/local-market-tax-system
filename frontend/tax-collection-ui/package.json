@@ -15,7 +15,7 @@
     "bootstrap-icons": "^1.13.1",
     "http-proxy-middleware": "^3.0.5",
     "react": "^19.1.0",
-    "react-bootstrap": "^2.7.2",
+    "react-bootstrap": "^2.10.10",
     "react-bootstrap-icons": "^1.11.6",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.1",
@@ -49,7 +49,6 @@
   },
   "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
   "main": "index.js",
-  "devDependencies": {},
   "keywords": [],
   "author": "",
   "license": "ISC"

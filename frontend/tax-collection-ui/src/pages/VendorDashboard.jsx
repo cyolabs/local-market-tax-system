@@ -1,27 +1,58 @@
-import React, { useState } from "react";
-import { Container, Row, Col, Card, Button, ListGroup } from "react-bootstrap";
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Container, Row, Col, Card, Button, ListGroup, Alert, Table } from "react-bootstrap";
+import PaymentModal from '../components/PaymentModal';
+import { initiateSTKPush, getPaymentTransactions } from '../services/mpesaService';
+import { useAuth } from '../contexts/AuthContext';
+
 
 const categories = [
-  { title: "Fresh products traders", image: "/images/fresh.jpg" },
-  { title: "Livestock and meat", image: "/images/livestock.jpg" },
-  { title: "Fish vendors", image: "/images/fish.jpg" },
-  { title: "Clothes and textile", image: "/images/clothes.jpg" },
-  { title: "Clothing and textile", image: "/images/clothing.jpg" },
-  { title: "Household goods", image: "/images/household.jpg" },
+  { title: "Fresh products traders", image: "/images/fresh.jpg", amount: 1000 },
+  { title: "Livestock and meat", image: "/images/livestock.jpg", amount: 1500 },
+  { title: "Fish vendors", image: "/images/fish.jpg", amount: 800 },
+  { title: "Clothes and textile", image: "/images/clothes.jpg", amount: 600 },
+  { title: "Clothing and textile", image: "/images/clothing.jpg", amount: 600 },
+  { title: "Household goods", image: "/images/household.jpg", amount: 700 },
 ];
 
 const VendorDashboard = () => {
-  const navigate = useNavigate();
+  const [activeSection, setActiveSection] = useState("payments");
+  const [showModal, setShowModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const { user } = useAuth();
+
+  const handlePayClick = (category) => {
+    setSelectedCategory(category);
+    setShowModal(true);
+  };
+  
+
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      const response = await getPaymentTransactions();
+      setTransactions(response.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch transactions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowModal(false);
+    setSuccess('Payment initiated successfully. Please check your phone to complete the transaction.');
+    fetchTransactions();
+  };
 
   useEffect(() => {
-    if (!localStorage.getItem('access_token')) {
-      navigate('/login');
+    if (activeSection === "tax-history") {
+      fetchTransactions();
     }
-  }, [navigate]);
-
-  const [activeSection, setActiveSection] = useState("payments");
+  }, [activeSection]);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -29,6 +60,8 @@ const VendorDashboard = () => {
         return (
           <>
             <h2 className="mb-4 text-center">Select payment category</h2>
+            {success && <Alert variant="success" onClose={() => setSuccess(null)} dismissible>{success}</Alert>}
+            {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
             <Row>
               {categories.map((item, idx) => (
                 <Col md={4} className="mb-4" key={idx}>
@@ -43,7 +76,16 @@ const VendorDashboard = () => {
                         />
                       </div>
                       <Card.Title>{item.title}</Card.Title>
-                      <Button variant="outline-dark">PAY</Button>
+                      <Card.Text className="text-muted">
+                        KES {item.amount.toLocaleString()}
+                      </Card.Text>
+                      <Button 
+                        variant="outline-dark" 
+                        onClick={() => handlePayClick(item)}
+                        disabled={loading}
+                      >
+                        {loading ? 'Processing...' : 'PAY'}
+                      </Button>
                     </Card.Body>
                   </Card>
                 </Col>
@@ -55,7 +97,47 @@ const VendorDashboard = () => {
         return (
           <>
             <h2 className="mb-4 text-center">Tax History</h2>
-            <p className="text-center">This is where the tax history will be displayed.</p>
+            {loading ? (
+              <div className="text-center">Loading transactions...</div>
+            ) : (
+              <Table striped bordered hover responsive>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Amount (KES)</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                    <th>Receipt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.length > 0 ? (
+                    transactions.map((txn) => (
+                      <tr key={txn.id}>
+                        <td>{new Date(txn.created_at).toLocaleDateString()}</td>
+                        <td>{txn.account_reference}</td>
+                        <td>{txn.amount.toLocaleString()}</td>
+                        <td>{txn.phone_number}</td>
+                        <td>
+                          <span className={`badge ${
+                            txn.status === 'Completed' ? 'bg-success' : 
+                            txn.status === 'Failed' ? 'bg-danger' : 'bg-warning'
+                          }`}>
+                            {txn.status}
+                          </span>
+                        </td>
+                        <td>{txn.receipt_number || 'N/A'}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="text-center">No transactions found</td>
+                    </tr>
+                  )}
+                </tbody>
+              </Table>
+            )}
           </>
         );
       case "feedback":
@@ -72,6 +154,13 @@ const VendorDashboard = () => {
 
   return (
     <div className="d-flex" style={{ maxHeight: "72vh" }}>
+      <PaymentModal 
+        show={showModal}
+        handleClose={() => setShowModal(false)}
+        category={selectedCategory}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+      
       {/* Sidebar */}
       <div
         style={{
@@ -84,20 +173,32 @@ const VendorDashboard = () => {
       >
         <h5 className="mb-4">Dashboard</h5>
         <ListGroup variant="flush">
-          <ListGroup.Item action onClick={() => setActiveSection("payments")}>
+          <ListGroup.Item 
+            action 
+            active={activeSection === "payments"}
+            onClick={() => setActiveSection("payments")}
+          >
             Payments
           </ListGroup.Item>
-          <ListGroup.Item action onClick={() => setActiveSection("tax-history")}>
+          <ListGroup.Item 
+            action 
+            active={activeSection === "tax-history"}
+            onClick={() => setActiveSection("tax-history")}
+          >
             Tax History
           </ListGroup.Item>
-          <ListGroup.Item action onClick={() => setActiveSection("feedback")}>
+          <ListGroup.Item 
+            action 
+            active={activeSection === "feedback"}
+            onClick={() => setActiveSection("feedback")}
+          >
             Feedback
           </ListGroup.Item>
         </ListGroup>
       </div>
 
       {/* Main content */}
-      <div className="flex-grow-1 bg-white">
+      <div className="flex-grow-1 bg-white" style={{ overflowY: 'auto' }}>
         <Container className="py-5">
           {renderContent()}
         </Container>
