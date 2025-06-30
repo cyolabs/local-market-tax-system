@@ -1,4 +1,3 @@
-// src/pages/LoginPage.jsx
 import React from 'react';
 import LoginForm from '../components/LoginForm';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -7,44 +6,38 @@ import '../custom.css';
 
 export default function LoginPage() {
   const handleLogin = async (data) => {
-    try {
-      const response = await fetch('https://local-market-tax-system-7fuw.onrender.com/login/', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    username: data.username,
-    password: data.password,
-  }),
-});
+  try {
+    console.log("Attempting login with:", data);
+    const response = await fetch('https://local-market-tax-system-7fuw.onrender.com/login/', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',  // For cookies if using them
+      body: JSON.stringify({
+        username: data.username,
+        password: data.password
+      }),
+    });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        const { access, refresh, user_type, username } = result;
-
-        // Save tokens and role
-        localStorage.setItem('access_token', access);
-        localStorage.setItem('refresh_token', refresh);
-        localStorage.setItem('user_role', user_type);
-        localStorage.setItem('username', username);
-
-        // Redirect user based on role
-        if (user_type === 'superadmin') {
-          window.location.href = '/superadmin-dashboard';
-        } else if (user_type === 'admin') {
-          window.location.href = '/admin-dashboard';
-        } else if (user_type === 'vendor') {
-          window.location.href = '/vendor-dashboard';
-        } else {
-          alert('Unknown role. Contact support.');
-        }
-      } else {
-        alert('Login failed: ' + (result.detail || JSON.stringify(result)));
-      }
-    } catch (error) {
-      alert('Network error. Please try again.');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Login failed');
     }
-  };
+
+    const result = await response.json();
+    console.log("Login success:", result);
+    
+    // Store tokens and redirect
+    localStorage.setItem('access_token', result.access);
+    localStorage.setItem('refresh_token', result.refresh);
+    window.location.href = result.role === 'admin' ? '/admin-dashboard' : '/vendor-dashboard';
+    
+  } catch (error) {
+    console.error("Login error:", error);
+    alert(error.message || 'Login failed. Please try again.');
+  }
+};
 
   return (
     <div className="signup-container">

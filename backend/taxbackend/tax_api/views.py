@@ -6,10 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 
 from .serializers import UserSerializer
-from .permissions import IsVendor
-from .permissions import IsSuperAdmin
-from .permissions import IsAdmin
-from django.http import JsonResponse
+from .permissions import IsVendor, IsAdmin
 
 class RegisterAPI(APIView):
     def post(self, request):
@@ -27,49 +24,104 @@ class RegisterAPI(APIView):
 
 class LoginAPI(APIView):
     def post(self, request):
-        user = authenticate(
-            username=request.data.get('username'),
-            password=request.data.get('password')
-        )
+        try:
+            username = request.data.get('username')
+            password = request.data.get('password')
+
+            if not username or not password:
+                return Response(
+                    {'error': 'Username and password are required.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user = authenticate(request, username=username, password=password)
+
+            if user is None:
+                return Response(
+                    {'error': 'Invalid Credentials'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'username': user.username,
+                'role': user.role
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(f"Login error: {str(e)}")
+            return Response(
+                {'error': 'Internal server error'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    def post(self, request):
+        try:
+            username = request.data.get('username')
+            password = request.data.get('password')
+
+            if not username or not password:
+                return Response(
+                    {'error': 'Username and password are required.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user = authenticate(request, username=username, password=password)
+
+            if user is None:
+                return Response(
+                    {'error': 'Invalid Credentials'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'username': user.username,
+                'role': user.role
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(f"Login error: {str(e)}")  # Check your logs for this
+            return Response(
+                {'error': 'Internal server error'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        if not username or not password:
+            return Response({'error': 'Username and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = authenticate(request, username=username, password=password)
+
         if user:
             refresh = RefreshToken.for_user(user)
-
-            if user.is_superadmin:
-                user_type = 'superadmin'
-            elif user.is_admin:
-                user_type = 'admin'
-            elif user.is_vendor:
-                user_type = 'vendor'
-            else:
-                user_type = 'unknown'
+            role = user.role  # 'admin' or 'vendor'
 
             return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-                'user_type': user_type,
-                'username': user.username
-            })
-        return Response(
-            {'error': 'Invalid Credentials'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
+                'username': user.username,
+                'role': role
+            }, status=status.HTTP_200_OK)
 
+        return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-
-class SuperAdminDashboardAPI(APIView):
-    permission_classes = [IsSuperAdmin]
-
-    def get(self, request):
-        return Response({"message": "Welcome Super Admin!"})
 
 class AdminDashboardAPI(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        return Response({"message": "Welcome Admin!"})
+        return Response({"message": "Welcome to the Admin Dashboard!"})
+
 
 class VendorDashboardAPI(APIView):
     permission_classes = [IsVendor]
 
     def get(self, request):
-        return Response({"message": "Welcome to the vendor dashboard!"})
+        return Response({"message": "Welcome to the Vendor Dashboard!"})

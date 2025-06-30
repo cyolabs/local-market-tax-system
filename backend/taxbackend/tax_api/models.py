@@ -3,7 +3,7 @@ from django.db import models
 
 class User(AbstractUser):
     full_name = models.CharField(max_length=100)
-    national_id = models.CharField(max_length=20, unique=False, blank=True, null=True)
+    national_id = models.CharField(max_length=20, unique=True, blank=False, null=False)
 
     ROLE_CHOICES = (
         ('admin', 'Admin'),
