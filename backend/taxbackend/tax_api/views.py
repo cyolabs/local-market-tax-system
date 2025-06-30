@@ -57,62 +57,6 @@ class LoginAPI(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-    def post(self, request):
-        try:
-            username = request.data.get('username')
-            password = request.data.get('password')
-
-            if not username or not password:
-                return Response(
-                    {'error': 'Username and password are required.'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            user = authenticate(request, username=username, password=password)
-
-            if user is None:
-                return Response(
-                    {'error': 'Invalid Credentials'}, 
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'username': user.username,
-                'role': user.role
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            print(f"Login error: {str(e)}")  # Check your logs for this
-            return Response(
-                {'error': 'Internal server error'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-
-        if not username or not password:
-            return Response({'error': 'Username and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = authenticate(request, username=username, password=password)
-
-        if user:
-            refresh = RefreshToken.for_user(user)
-            role = user.role  # 'admin' or 'vendor'
-
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'username': user.username,
-                'role': role
-            }, status=status.HTTP_200_OK)
-
-        return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
-
 class AdminDashboardAPI(APIView):
     permission_classes = [IsAdmin]
 
