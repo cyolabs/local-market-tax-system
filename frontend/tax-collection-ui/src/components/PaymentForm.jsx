@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Form, Button, Alert } from 'react-bootstrap';
+import { Form, Button, Alert, Card } from 'react-bootstrap';
 import { initiateSTKPush } from '../services/mpesaService';
 
 const PaymentForm = ({ onPaymentInitiated }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [amount, setAmount] = useState(''); // State for amount input
+  const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -16,19 +16,16 @@ const PaymentForm = ({ onPaymentInitiated }) => {
     setSuccess(null);
 
     try {
-      // 1. Format phone number
       const formattedPhone = phoneNumber.startsWith('0') 
         ? `254${phoneNumber.substring(1)}`
         : phoneNumber.startsWith('+')
         ? phoneNumber.substring(1)
         : phoneNumber;
 
-      // 2. Validate amount
       if (!amount || amount < 1) {
         throw new Error('Amount must be at least 1 KES');
       }
 
-      // 3. Initiate payment
       const response = await initiateSTKPush(
         formattedPhone,
         amount,
@@ -52,60 +49,50 @@ const PaymentForm = ({ onPaymentInitiated }) => {
   };
 
   return (
-    <Form onSubmit={handleSubmit}>
-      {error && <Alert variant="danger" dismissible onClose={() => setError(null)}>{error}</Alert>}
-      {success && <Alert variant="success" dismissible onClose={() => setSuccess(null)}>{success}</Alert>}
-      
-      {/* Phone Number Field */}
-      <Form.Group controlId="phoneNumber" className="mb-3">
-        <Form.Label>Phone Number</Form.Label>
-        <Form.Control
-          type="tel"
-          placeholder="e.g. 0722123456 or 254722123456"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          pattern="^(0|\+?254)\d{9}$"
-          required
-        />
-        <Form.Text className="text-muted">
-          Starts with 0, +254, or 254
-        </Form.Text>
-      </Form.Group>
+    <Card className="p-4 shadow-sm">
+      {/* M-Pesa Header */}
+      <div className="text-center mb-4">
+        <img src="/M-PESA_LOGO-01.svg" alt="M-Pesa" style={{ height: '50px', marginBottom: '1rem' }} />
+        <h5 className="mt-3">Pay with M-Pesa</h5>
+        <p className="text-muted small">Secure mobile payment powered by Safaricom</p>
+      </div>
 
-      {/* SINGLE Amount Field - Choose ONE of these options: */}
+      <Form onSubmit={handleSubmit}>
+        {error && <Alert variant="danger" dismissible onClose={() => setError(null)}>{error}</Alert>}
+        {success && <Alert variant="success" dismissible onClose={() => setSuccess(null)}>{success}</Alert>}
+        
+        <Form.Group controlId="phoneNumber" className="mb-3">
+          <Form.Label>Phone Number</Form.Label>
+          <Form.Control
+            type="tel"
+            placeholder="e.g. 0722123456 or 254722123456"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            pattern="^(0|\+?254)\d{9}$"
+            required
+          />
+          <Form.Text className="text-muted">
+            Must start with 0, +254, or 254
+          </Form.Text>
+        </Form.Group>
 
-      {/* Option 1: Editable Amount */}
-      <Form.Group controlId="amount" className="mb-3">
-        <Form.Label>Amount (KES)</Form.Label>
-        <Form.Control
-          type="number"
-          placeholder="Enter amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          min="1"
-          required
-        />
-      </Form.Group>
+        <Form.Group controlId="amount" className="mb-3">
+          <Form.Label>Amount (KES)</Form.Label>
+          <Form.Control
+            type="number"
+            placeholder="Enter amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            min="1"
+            required
+          />
+        </Form.Group>
 
-      {/* OR */}
-
-      {/* Option 2: Read-only Amount (if receiving from props) */}
-      {/* 
-      <Form.Group controlId="amount" className="mb-3">
-        <Form.Label>Amount (KES)</Form.Label>
-        <Form.Control
-          type="number"
-          value={amount}
-          readOnly
-          min="1"
-        />
-      </Form.Group>
-      */}
-
-      <Button variant="primary" type="submit" disabled={isLoading}>
-        {isLoading ? 'Processing...' : 'Pay via M-Pesa'}
-      </Button>
-    </Form>
+        <Button variant="success" type="submit" disabled={isLoading} className="w-100">
+          {isLoading ? 'Processing...' : 'Pay via M-Pesa'}
+        </Button>
+      </Form>
+    </Card>
   );
 };
 
