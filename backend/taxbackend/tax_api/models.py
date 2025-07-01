@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+import uuid
+
 class User(AbstractUser):
     full_name = models.CharField(max_length=100)
     national_id = models.CharField(max_length=20, unique=True, blank=False, null=False)
@@ -83,7 +85,7 @@ class PaymentTransaction(models.Model):
 class PaymentTransaction(models.Model):
     phone_number = models.CharField(max_length=15)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    transaction_id = models.CharField(max_length=100, unique=True)
+    transaction_id = models.CharField(max_length=100,unique=True,default=uuid.uuid4,)
     merchant_request_id = models.CharField(max_length=100, null=True, blank=True)
     checkout_request_id = models.CharField(max_length=100)
     transaction_date = models.DateTimeField()
@@ -92,4 +94,7 @@ class PaymentTransaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_id} - {self.status}"
+
+
+
 
