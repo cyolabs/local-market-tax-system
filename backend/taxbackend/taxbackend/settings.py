@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import os
+import dj_database_url
 from dotenv import load_dotenv
 
 load_dotenv() 
@@ -81,8 +82,10 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': 'dpg-d1ht0i3e5dus739e6rag-a',  
         'PORT': '5432',
+        'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
     }
 }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
