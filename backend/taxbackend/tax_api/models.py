@@ -79,3 +79,17 @@ class PaymentTransaction(models.Model):
     
     def __str__(self):
         return f"{self.account_reference} - {self.amount}"
+    
+class PaymentTransaction(models.Model):
+    phone_number = models.CharField(max_length=15)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_id = models.CharField(max_length=100, unique=True)
+    merchant_request_id = models.CharField(max_length=100, null=True, blank=True)
+    checkout_request_id = models.CharField(max_length=100)
+    transaction_date = models.DateTimeField()
+    status = models.CharField(max_length=20)
+    result_description = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.transaction_id} - {self.status}"
+
