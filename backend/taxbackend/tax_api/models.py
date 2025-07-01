@@ -54,47 +54,30 @@ class PaymentTransaction(models.Model):
     ]
     
     user = models.ForeignKey(
-        'User',  # Use string reference to avoid circular import
+        'User',
         on_delete=models.SET_NULL, 
         null=True, 
         related_name='transactions'
     )
     phone_number = models.CharField(max_length=15)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_id = models.CharField(max_length=100, unique=True, default=uuid.uuid4)
     account_reference = models.CharField(max_length=100)
     description = models.CharField(max_length=100)
-    merchant_request_id = models.CharField(max_length=100)
+    merchant_request_id = models.CharField(max_length=100, null=True, blank=True)
     checkout_request_id = models.CharField(max_length=100)
     receipt_number = models.CharField(max_length=100, null=True, blank=True)
-    transaction_date = models.DateTimeField(null=True, blank=True)  # Changed to DateTimeField
-    status = models.CharField(
-        max_length=15, 
-        choices=TRANSACTION_STATUS, 
-        default='Pending'
-    )
+    transaction_date = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=15, choices=TRANSACTION_STATUS, default='Pending')
     result_description = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['-created_at']  # New transactions first
-    
-    def __str__(self):
-        return f"{self.account_reference} - {self.amount}"
-    
-class PaymentTransaction(models.Model):
-    phone_number = models.CharField(max_length=15)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    transaction_id = models.CharField(max_length=100,unique=True,default=uuid.uuid4,)
-    merchant_request_id = models.CharField(max_length=100, null=True, blank=True)
-    checkout_request_id = models.CharField(max_length=100)
-    transaction_date = models.DateTimeField()
-    status = models.CharField(max_length=20)
-    result_description = models.TextField(null=True, blank=True)
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.transaction_id} - {self.status}"
-
 
 
 
