@@ -9,8 +9,6 @@ from rest_framework.decorators import permission_classes
 import logging
 
 logger = logging.getLogger(__name__)
-@permission_classes([AllowAny])
-@csrf_exempt
 class InitiateSTKPushView(APIView):
     def post(self, request):
         try:
