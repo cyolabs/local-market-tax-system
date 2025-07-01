@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Modal, Button, Spinner, Alert } from 'react-bootstrap';
 import PaymentForm from './PaymentForm';
