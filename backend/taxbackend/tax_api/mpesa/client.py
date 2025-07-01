@@ -44,6 +44,8 @@ class MpesaClient:
         password_string = f"{self.business_shortcode}{self.passkey}{timestamp}"
         encoded_password = base64.b64encode(password_string.encode()).decode()
         return encoded_password, timestamp
+    MPESA_BUSINESS_SHORTCODE = "174379"  # Sandbox Till
+    MPESA_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919" 
         
     def stk_push(self, phone_number, amount, account_reference, transaction_desc):
         try:

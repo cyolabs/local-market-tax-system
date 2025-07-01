@@ -19,3 +19,4 @@ def stk_callback(request):
         
         transaction.save()
         return JsonResponse({"status": "ok"})
+    
