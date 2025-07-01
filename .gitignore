@@ -176,3 +176,4 @@ cython_debug/
 .pypirc
 backend/db.sqlite3
 *.sqlite3
+backend/db.sqlite3

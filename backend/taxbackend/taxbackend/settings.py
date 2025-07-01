@@ -107,10 +107,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'tax_api.User'
 
-# Django REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    # Change from IsAuthenticated to AllowAny for public endpoints
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',  # Changed from IsAuthenticated
     )
 }
 
@@ -121,6 +124,12 @@ SIMPLE_JWT = {
 }
 CORS_ALLOW_ALL_ORIGINS = True 
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://local-market-tax-system-frontend.onrender.com"
+]
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000", 
@@ -128,35 +137,15 @@ CORS_ALLOWED_ORIGINS = [
     "https://local-market-tax-system-7fuw.onrender.com"
 ]
 
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
+
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "https://local-market-tax-system-frontend.onrender.com",
     "https://local-market-tax-system-7fuw.onrender.com"
 ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    )
-}
-
 MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY') 
 MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET')
 MPESA_BUSINESS_SHORTCODE = os.getenv('MPESA_BUSINESS_SHORTCODE')
 MPESA_PASSKEY = os.getenv('MPESA_PASSKEY')
 MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL') 
-
