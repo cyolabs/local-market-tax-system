@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import React, { useEffect } from 'react';
+import api from '../services/api';
 import { Modal, Button, Spinner, Alert } from 'react-bootstrap';
 import PaymentForm from './PaymentForm';
 import { downloadReceipt } from '../services/mpesaService';
@@ -38,6 +40,27 @@ const PaymentModal = ({ show, handleClose, onPaymentSuccess, transaction }) => {
       setIsDownloading(false);
     }
   };
+
+    useEffect(() => {
+    let interval;
+
+    if (transaction?.id && transaction.status === 'Pending') {
+      interval = setInterval(async () => {
+        try {
+          const res = await api.get(`/api/payment-transactions/${transaction.id}/`);
+
+          if (res.data.status === 'Completed') {
+            onPaymentSuccess(res.data); // tell parent it's now completed
+            clearInterval(interval);    // stop polling once done
+          }
+        } catch (err) {
+          console.error('Error polling transaction:', err);
+        }
+      }, 5000); // every 5 seconds
+    }
+
+    return () => clearInterval(interval); // clean up on unmount
+  }, [transaction]);
 
   return (
     <Modal show={show} onHide={handleClose}>
