@@ -12,6 +12,7 @@ from django.http import HttpResponse
 from reportlab.pdfgen import canvas
 import io
 from datetime import datetime
+from ..serializers import PaymentTransactionSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -124,3 +125,13 @@ class MpesaCallbackView(APIView):
         except Exception as e:
             logger.error(f"Error processing M-Pesa callback: {str(e)}")
             return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class PaymentTransactionDetailView(APIView):
+    def get(self, request, transaction_id):
+        try:
+            transaction = PaymentTransaction.objects.get(id=transaction_id)
+            serializer = PaymentTransactionSerializer(transaction)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except PaymentTransaction.DoesNotExist:
+            return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
