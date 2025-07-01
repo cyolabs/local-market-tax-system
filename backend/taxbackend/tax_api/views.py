@@ -8,6 +8,51 @@ from django.contrib.auth import authenticate
 from .serializers import UserSerializer
 from .permissions import IsVendor, IsAdmin
 
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from .models import PaymentTransaction
+
+def generate_pdf_receipt(request, tx_id):
+    transaction = get_object_or_404(PaymentTransaction, transaction_id=tx_id)
+
+    # Create the PDF in memory
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="Receipt_{transaction.transaction_id}.pdf"'
+
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # PDF Content
+    y = height - 50
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(50, y, "Local Market Tax Payment Receipt")
+    p.setFont("Helvetica", 12)
+    y -= 30
+
+    p.drawString(50, y, f"Receipt Number: {transaction.transaction_id}")
+    y -= 20
+    p.drawString(50, y, f"Phone Number: {transaction.phone_number}")
+    y -= 20
+    p.drawString(50, y, f"Amount Paid: KES {transaction.amount}")
+    y -= 20
+    p.drawString(50, y, f"Transaction Date: {transaction.transaction_date.strftime('%Y-%m-%d %H:%M:%S')}")
+    y -= 20
+    p.drawString(50, y, f"Status: {transaction.status}")
+    y -= 40
+
+    p.setFont("Helvetica-Oblique", 10)
+    p.drawString(50, y, "Thank you for your payment.")
+
+    # Finalize PDF
+    p.showPage()
+    p.save()
+
+    return response
+
+
 class RegisterAPI(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
