@@ -15,11 +15,12 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'username', 'password', 'password2',
             'full_name', 'national_id', 'business_type',
-            'gender', 'email','role'
+            'gender', 'email', 'role', 'market_of_operation'
         ]
         extra_kwargs = {
             'national_id': {'required': True},
             'full_name': {'required': True},
+            'market_of_operation': {'required': True},
         }
 
     def validate(self, attrs):

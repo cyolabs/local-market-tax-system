@@ -1,4 +1,3 @@
-// src/components/RegisterForm.jsx
 import React, { useState } from "react";
 import { Person, Envelope, Lock } from "react-bootstrap-icons";
 import "../custom.css";
@@ -11,6 +10,7 @@ export default function RegisterForm({ onSubmit }) {
     national_id: "",
     business_type: "retail",
     gender: "M",
+    market_of_operation: "",
     password: "",
     password2: "",
   });
@@ -80,15 +80,42 @@ export default function RegisterForm({ onSubmit }) {
           <option value="other">Other</option>
         </select>
       </div>
-
       <div className="input-group">
-        <select name="gender" required onChange={handleChange} defaultValue="">
+        <select
+          name="gender"
+          required
+          onChange={handleChange}
+          defaultValue=""
+        >
           <option value="" disabled>
             Gender
           </option>
           <option value="M">Male</option>
           <option value="F">Female</option>
           <option value="O">Other</option>
+        </select>
+      </div>
+
+      <div className="input-group">
+        <select
+          name="market_of_operation"
+          required
+          onChange={handleChange}
+          defaultValue=""
+        >
+          <option value="" disabled>
+            Market of Operation
+          </option>
+          <option value="kapsabet">Kapsabet Market</option>
+          <option value="mosoriot">Mosoriot Market</option>
+          <option value="nandi_hills">Nandi Hills Market</option>
+          <option value="kabiyet">Kabiyet Market</option>
+          <option value="kebulonik">Kebulonik Market</option>
+          <option value="lessos">Lessos Market</option>
+          <option value="kaiboi">Kaiboi Market</option>
+          <option value="chepterit">Chepterit Market</option>
+          <option value="baraton">Baraton Market</option>
+          <option value="kipkaren">Kipkaren Market</option>
         </select>
       </div>
 
