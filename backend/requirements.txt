@@ -18,4 +18,4 @@ pycryptodome
 psycopg2-binary>=2.9
 pycryptodome>=3.10
 dj-database-url
-
+reportlab==4.1.0
