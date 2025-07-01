@@ -7,6 +7,8 @@ import json
 from django.conf import settings
 import logging
 
+token_url = settings.MPESA_TOKEN_API_URL
+
 logger = logging.getLogger(__name__)
 
 class MpesaClient:
