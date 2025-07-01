@@ -75,15 +75,7 @@ WSGI_APPLICATION = 'taxbackend.wsgi.application'
 
 # Database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'LMTdb',
-        'USER': 'lmtdb_s6yr_user',
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': 'dpg-d1ht0i3e5dus739e6rag-a',  
-        'PORT': '5432',
-        'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
-    }
+    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
 }
 
 
