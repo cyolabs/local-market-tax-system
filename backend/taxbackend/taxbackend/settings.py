@@ -74,10 +74,22 @@ TEMPLATES = [
 WSGI_APPLICATION = 'taxbackend.wsgi.application'
 
 # Database
-DATABASES = {
+if os.getenv('RENDER', False):
+ DATABASES = {
     'default': dj_database_url.config(default=os.getenv('DATABASE_URL'),conn_max_age=600,
         ssl_require=True )
-}
+ }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'lmtdb',
+            'USER': 'postgres',
+            'PASSWORD': 'KIM JONG-UN',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
 
 
 # Password validation
