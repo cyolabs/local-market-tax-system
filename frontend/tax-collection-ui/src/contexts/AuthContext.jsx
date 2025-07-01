@@ -10,7 +10,6 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('access_token');
     const username = localStorage.getItem('username');
     const role = localStorage.getItem('user_role');
-
     if (token && username) {
       setCurrentUser({ username, role });
     }

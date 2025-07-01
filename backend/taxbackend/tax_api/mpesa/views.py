@@ -1,15 +1,20 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from .client import MpesaClient
 from ..models import PaymentTransaction
 from ..serializers import PaymentTransactionSerializer
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import permission_classes
+from django.utils.decorators import method_decorator
 import logging
 
 logger = logging.getLogger(__name__)
+
+@method_decorator(csrf_exempt, name='dispatch')
 class InitiateSTKPushView(APIView):
+    permission_classes = [IsAuthenticated]  # Moved inside the class
+
     def post(self, request):
         try:
             phone_number = request.data.get('phone_number')
@@ -25,7 +30,6 @@ class InitiateSTKPushView(APIView):
                 transaction_desc=transaction_desc
             )
             
-            # Save initial transaction data
             transaction = PaymentTransaction.objects.create(
                 phone_number=phone_number,
                 amount=amount,
@@ -51,19 +55,20 @@ class InitiateSTKPushView(APIView):
                 'message': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class MpesaCallbackView(APIView):
+    # No authentication needed for callbacks
+    permission_classes = []
+
     def post(self, request):
         try:
             callback_data = request.data
-            
-            # Process the callback data
             result_code = callback_data.get('Body', {}).get('stkCallback', {}).get('ResultCode')
             checkout_request_id = callback_data.get('Body', {}).get('stkCallback', {}).get('CheckoutRequestID')
             
             transaction = PaymentTransaction.objects.get(checkout_request_id=checkout_request_id)
             
             if result_code == 0:
-                # Success
                 callback_metadata = callback_data.get('Body', {}).get('stkCallback', {}).get('CallbackMetadata', {}).get('Item', [])
                 
                 for item in callback_metadata:
@@ -78,11 +83,7 @@ class MpesaCallbackView(APIView):
                 
                 transaction.status = 'Completed'
                 transaction.save()
-                
-                # Here you can add additional logic like updating vendor balance, etc.
-                
             else:
-                # Failed
                 transaction.status = 'Failed'
                 transaction.result_description = callback_data.get('Body', {}).get('stkCallback', {}).get('ResultDesc')
                 transaction.save()
@@ -92,4 +93,3 @@ class MpesaCallbackView(APIView):
         except Exception as e:
             logger.error(f"Error processing M-Pesa callback: {str(e)}")
             return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-

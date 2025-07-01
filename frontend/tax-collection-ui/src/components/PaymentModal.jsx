@@ -20,4 +20,5 @@ const PaymentModal = ({ show, handleClose, onPaymentSuccess }) => {
   );
 };
 
+
 export default PaymentModal;
