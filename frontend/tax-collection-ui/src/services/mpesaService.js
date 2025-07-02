@@ -43,6 +43,20 @@ export const getPaymentTransactions = async () => {
     return response.data;
   } catch (error) {
     console.error('Error fetching transactions:', error);
-    throw error;
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      console.error('Response data:', error.response.data);
+      console.error('Response status:', error.response.status);
+      console.error('Response headers:', error.response.headers);
+      throw new Error(error.response.data.message || 'Failed to fetch transactions');
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received:', error.request);
+      throw new Error('No response from server');
+    } else {
+      // Something happened in setting up the request
+      console.error('Request setup error:', error.message);
+      throw new Error('Request failed');
+    }
   }
 };
