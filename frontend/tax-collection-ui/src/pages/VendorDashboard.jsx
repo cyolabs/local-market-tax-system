@@ -125,22 +125,25 @@ const VendorDashboard = () => {
   };
 
   const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-      const response = await getPaymentTransactions();
-      if (response && response.data) {
-        setTransactions(response.data);
-      } else {
-        setError("No transactions data received");
-      }
-    } catch (err) {
-      console.error("Fetch transactions error:", err);
-      setError(err.message || "Failed to fetch transactions");
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+    setError(null);
+    const response = await getPaymentTransactions();
+    
+    if (response?.success) {
+      setTransactions(response.data || []);
+    } else {
+      setError(response?.message || "No transactions data received");
+      setTransactions([]);
     }
-  };
-
+  } catch (err) {
+    console.error("Fetch error:", err);
+    setError(err.message);
+    setTransactions([]);
+  } finally {
+    setLoading(false);
+  }
+};
   const handlePaymentSuccess = async (transactionData) => {
     setShowModal(false);
     setSuccess(
@@ -259,93 +262,43 @@ const VendorDashboard = () => {
         );
 
       case "tax-history":
-        return (
-          <>
-            <h4 className="mb-4 text-center">Tax History</h4>
-            {loading ? (
-              <div className="text-center">
-                <Spinner animation="border" />
-                <p>Loading transactions...</p>
-              </div>
-            ) : error ? (
-              <Alert variant="danger">
-                {error}
-                <Button 
-                  variant="link" 
-                  onClick={fetchTransactions}
-                  className="p-0 ms-2"
-                >
-                  Retry
-                </Button>
-              </Alert>
-            ) : (
-              <Table striped bordered hover responsive>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Category</th>
-                    <th>Amount (KES)</th>
-                    <th>Phone</th>
-                    <th>Status</th>
-                    <th>Receipt</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.length > 0 ? (
-                    transactions.map((txn) => (
-                      <tr key={txn.id}>
-                        <td>{new Date(txn.created_at).toLocaleString()}</td>
-                        <td>{txn.account_reference}</td>
-                        <td>{txn.amount.toLocaleString()}</td>
-                        <td>{txn.phone_number}</td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              txn.status === "Completed"
-                                ? "bg-success"
-                                : txn.status === "Failed"
-                                ? "bg-danger"
-                                : "bg-warning"
-                            }`}
-                          >
-                            {txn.status}
-                          </span>
-                        </td>
-                        <td>
-                          {txn.status === 'Completed' && txn.receipt_number ? (
-                            <>
-                              <Button 
-                                variant="link" 
-                                onClick={() => handleViewReceipt(txn)}
-                                className="p-0 me-2"
-                              >
-                                View
-                              </Button>
-                              <Button 
-                                variant="link" 
-                                onClick={() => handleDownloadReceipt(txn.id)}
-                                className="p-0"
-                              >
-                                Download
-                              </Button>
-                            </>
-                          ) : 'N/A'}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="text-center">
-                        No transactions found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
-            )}
-          </>
-        );
-
+  return (
+    <>
+      <h4 className="mb-4 text-center">Tax History</h4>
+      {loading ? (
+        <div className="text-center">
+          <Spinner animation="border" variant="primary" />
+          <p>Loading transactions...</p>
+        </div>
+      ) : error ? (
+        <Alert variant="danger">
+          {error}
+          <Button 
+            variant="link" 
+            onClick={fetchTransactions}
+            className="p-0 ms-2"
+          >
+            Retry
+          </Button>
+        </Alert>
+      ) : transactions.length > 0 ? (
+        <Table striped bordered hover responsive>
+          {/* Table headers */}
+          <tbody>
+            {transactions.map((txn) => (
+              <tr key={txn.id}>
+                {/* Table cells */}
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      ) : (
+        <Alert variant="info">
+          No transactions found. Make a payment to see your history.
+        </Alert>
+      )}
+    </>
+  );
       case "feedback":
         return (
           <>
