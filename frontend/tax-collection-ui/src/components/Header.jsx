@@ -22,9 +22,9 @@ const Header = () => {
         <img src="/logo.png" alt="Logo" width="25" className="me-2" />
         <div style={{ lineHeight: "1rem" }}>
           <div style={{ fontSize: "0.9rem", fontWeight: "bold" }}>
-            Local Market Tax
+            Local Market Tax Collection System
           </div>
-          <div style={{ fontSize: "0.8rem" }}>Collection System</div>
+          <div style={{ fontSize: "0.8rem" }}></div>
         </div>
       </div>
 
