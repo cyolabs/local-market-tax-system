@@ -25,9 +25,9 @@ const categories = [
   { title: "Livestock and meat", image: "/images/livestock.jpg", amount: 1500 },
   { title: "Fish vendors", image: "/images/fish.jpg", amount: 800 },
   { title: "Clothes and textile", image: "/images/clothes.jpg", amount: 600 },
-  { title: "Clothing and textile", image: "/images/clothing.jpg", amount: 600 },
   { title: "Household goods", image: "/images/household.jpg", amount: 700 },
 ];
+
 
 const Receipt = ({ transaction, show, onHide }) => {
   if (!transaction) return null;
