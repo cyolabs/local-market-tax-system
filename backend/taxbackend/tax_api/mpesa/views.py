@@ -61,21 +61,64 @@ class InitiateSTKPushView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 @method_decorator(csrf_exempt, name='dispatch')
+class TransactionHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        transactions = PaymentTransaction.objects.filter(user=request.user).order_by('-created_at')
+        serializer = PaymentTransactionSerializer(transactions, many=True)
+        return Response(serializer.data)
+
+@method_decorator(csrf_exempt, name='dispatch')
 class DownloadReceiptView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, transaction_id):
         try:
-            transaction = PaymentTransaction.objects.get(id=transaction_id)
+            transaction = PaymentTransaction.objects.get(
+                transaction_id=transaction_id,
+                user=request.user,
+                status='Completed'
+            )
             
-            # Create PDF
+            # Create PDF with better formatting
             buffer = io.BytesIO()
             p = canvas.Canvas(buffer)
             
-            # Customize receipt (example)
-            p.drawString(100, 800, "OFFICIAL RECEIPT")
-            p.drawString(100, 750, f"Receipt No: {transaction.receipt_number}")
-            p.drawString(100, 700, f"Amount: KES {transaction.amount}")
-            p.drawString(100, 650, f"Phone: {transaction.phone_number}")
-            p.drawString(100, 600, f"Date: {transaction.created_at.strftime('%Y-%m-%d %H:%M')}")
+            # Header
+            p.setFont("Helvetica-Bold", 16)
+            p.drawString(100, 800, "COUNTY GOVERNMENT RECEIPT")
+            p.setFont("Helvetica", 12)
+            p.drawString(100, 780, f"Receipt No: {transaction.receipt_number}")
+            p.drawString(100, 760, f"Date: {transaction.created_at.strftime('%Y-%m-%d %H:%M')}")
+            
+            # Line separator
+            p.line(100, 750, 450, 750)
+            
+            # Transaction details
+            p.setFont("Helvetica-Bold", 14)
+            p.drawString(100, 730, "TRANSACTION DETAILS")
+            p.setFont("Helvetica", 12)
+            
+            details = [
+                ("Vendor:", request.user.full_name),
+                ("Phone:", transaction.phone_number),
+                ("Market:", request.user.market_of_operation),
+                ("Category:", transaction.account_reference),
+                ("Amount:", f"KES {transaction.amount}"),
+                ("Status:", transaction.status),
+            ]
+            
+            y_position = 710
+            for label, value in details:
+                p.drawString(100, y_position, label)
+                p.drawString(200, y_position, value)
+                y_position -= 20
+            
+            # Footer
+            p.setFont("Helvetica-Oblique", 10)
+            p.drawString(100, 600, "Thank you for your payment!")
+            p.drawString(100, 580, "County Government Revenue System")
             
             p.showPage()
             p.save()
@@ -85,8 +128,8 @@ class DownloadReceiptView(APIView):
             response['Content-Disposition'] = f'attachment; filename="receipt_{transaction.receipt_number}.pdf"'
             return response
             
-        except Exception as e:
-            return Response({"error": str(e)}, status=400)
+        except PaymentTransaction.DoesNotExist:
+            return Response({"error": "Valid receipt not found"}, status=404)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class MpesaCallbackView(APIView):

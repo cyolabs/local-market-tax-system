@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Button, Alert, Card } from 'react-bootstrap';
 import { initiateSTKPush } from '../services/mpesaService';
 
-const PaymentForm = ({ onPaymentInitiated }) => {
+const PaymentForm = ({ onPaymentInitiated, defaultAmount }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(defaultAmount || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  useEffect(() => {
+    if (defaultAmount) {
+      setAmount(defaultAmount);
+    }
+  }, [defaultAmount]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,7 +56,6 @@ const PaymentForm = ({ onPaymentInitiated }) => {
 
   return (
     <Card className="p-4 shadow-sm">
-      {/* M-Pesa Header */}
       <div className="text-center mb-4">
         <img src="/M-PESA_LOGO-01.svg" alt="M-Pesa" style={{ height: '50px', marginBottom: '1rem' }} />
         <h5 className="mt-3">Pay with M-Pesa</h5>
@@ -77,16 +82,15 @@ const PaymentForm = ({ onPaymentInitiated }) => {
         </Form.Group>
 
         <Form.Group controlId="amount" className="mb-3">
-          <Form.Label>Amount (KES)</Form.Label>
-          <Form.Control
-            type="number"
-            placeholder="Enter amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            min="1"
-            required
-          />
-        </Form.Group>
+  <Form.Label>Amount (KES)</Form.Label>
+  <Form.Control
+    type="number"
+    value={amount}
+    readOnly
+    plaintext 
+  />
+</Form.Group>
+
 
         <Button variant="success" type="submit" disabled={isLoading} className="w-100">
           {isLoading ? 'Processing...' : 'Pay via M-Pesa'}

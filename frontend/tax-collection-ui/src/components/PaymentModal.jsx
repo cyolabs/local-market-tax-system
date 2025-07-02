@@ -4,7 +4,7 @@ import { Modal, Button, Spinner, Alert } from 'react-bootstrap';
 import PaymentForm from './PaymentForm';
 import { downloadReceipt } from '../services/mpesaService';
 
-const PaymentModal = ({ show, handleClose, onPaymentSuccess, transaction }) => {
+const PaymentModal = ({ show, handleClose, onPaymentSuccess,category, transaction }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -67,7 +67,7 @@ const PaymentModal = ({ show, handleClose, onPaymentSuccess, transaction }) => {
         <Modal.Title>Payment Receipt</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <PaymentForm onPaymentInitiated={onPaymentSuccess} />
+        <PaymentForm onPaymentInitiated={onPaymentSuccess} defaultAmount={category?.amount} />
         
         {transaction?.status === 'Completed' && (
           <div className="mt-3">

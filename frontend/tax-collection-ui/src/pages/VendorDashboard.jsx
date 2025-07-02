@@ -9,16 +9,19 @@ import {
   Alert,
   Table,
   Form,
+  Modal,
+  Spinner
 } from "react-bootstrap";
 import PaymentModal from "../components/PaymentModal";
 import {
   initiateSTKPush,
   getPaymentTransactions,
+  downloadReceipt
 } from "../services/mpesaService";
 import { useAuth } from "../contexts/AuthContext";
 
 const categories = [
-  { title: "Fresh products traders", image: "/images/fresh.jpg", amount: 1000 },
+  { title: "Fresh products traders", image: "/images/fresh.jpg", amount: 1 },
   { title: "Livestock and meat", image: "/images/livestock.jpg", amount: 1500 },
   { title: "Fish vendors", image: "/images/fish.jpg", amount: 800 },
   { title: "Clothes and textile", image: "/images/clothes.jpg", amount: 600 },
@@ -26,15 +29,91 @@ const categories = [
   { title: "Household goods", image: "/images/household.jpg", amount: 700 },
 ];
 
+const Receipt = ({ transaction, show, onHide }) => {
+  if (!transaction) return null;
+
+  return (
+    <Modal show={show} onHide={onHide} size="lg">
+      <Modal.Header closeButton>
+        <Modal.Title>Payment Receipt</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="receipt-container">
+          <h4 className="text-center mb-4">COUNTY GOVERNMENT RECEIPT</h4>
+          
+          <Table borderless>
+            <tbody>
+              <tr>
+                <td><strong>Receipt No:</strong></td>
+                <td>{transaction.receipt_number}</td>
+              </tr>
+              <tr>
+                <td><strong>Date:</strong></td>
+                <td>{new Date(transaction.created_at).toLocaleString()}</td>
+              </tr>
+              <tr className="border-top">
+                <td colSpan="2"><strong>TRANSACTION DETAILS</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Amount:</strong></td>
+                <td>KES {transaction.amount.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td><strong>Category:</strong></td>
+                <td>{transaction.account_reference}</td>
+              </tr>
+              <tr>
+                <td><strong>Phone:</strong></td>
+                <td>{transaction.phone_number}</td>
+              </tr>
+              <tr>
+                <td><strong>Status:</strong></td>
+                <td>
+                  <span className={`badge ${
+                    transaction.status === 'Completed' ? 'bg-success' : 
+                    transaction.status === 'Failed' ? 'bg-danger' : 'bg-warning'
+                  }`}>
+                    {transaction.status}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </Table>
+          
+          <div className="text-center mt-4">
+            <p className="text-muted">Thank you for your payment!</p>
+            <p className="text-muted">County Government Revenue System</p>
+          </div>
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onHide}>
+          Close
+        </Button>
+        <Button 
+          variant="primary" 
+          onClick={() => window.print()}
+          className="no-print"
+        >
+          Print Receipt
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+};
+
 const VendorDashboard = () => {
   const [activeSection, setActiveSection] = useState("payments");
   const [showModal, setShowModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const { user } = useAuth();
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   const [feedbackSubject, setFeedbackSubject] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
@@ -49,25 +128,58 @@ const VendorDashboard = () => {
     try {
       setLoading(true);
       const response = await getPaymentTransactions();
-      setTransactions(response.data);
+      if (response && response.data) {
+        setTransactions(response.data);
+      } else {
+        setError("No transactions data received");
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch transactions");
+      console.error("Fetch transactions error:", err);
+      setError(err.message || "Failed to fetch transactions");
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async (transactionData) => {
     setShowModal(false);
     setSuccess(
       "Payment initiated successfully. Please check your phone to complete the transaction."
     );
-    fetchTransactions();
+    // Wait 5 seconds before refreshing to allow backend to process
+    setTimeout(() => {
+      fetchTransactions();
+    }, 5000);
+  };
+
+  const handleViewReceipt = (transaction) => {
+    setSelectedTransaction(transaction);
+    setShowReceipt(true);
+  };
+
+  const handleDownloadReceipt = async (transactionId) => {
+    try {
+      const result = await downloadReceipt(transactionId);
+      if (result.success) {
+        const url = window.URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      setError('Failed to download receipt');
+      console.error(err);
+    }
   };
 
   const handleFeedbackSubmit = (e) => {
     e.preventDefault();
-    // TODO: Send feedback to API
     setFeedbackSuccess("Thank you for your feedback!");
     setFeedbackSubject("");
     setFeedbackMessage("");
@@ -128,10 +240,15 @@ const VendorDashboard = () => {
                       <Button
                         variant="outline-dark"
                         onClick={() => handlePayClick(item)}
-                        disabled={loading}
+                        disabled={paymentLoading}
                         className="fw-bold px-4 py-2"
                       >
-                        {loading ? "Processing..." : "PAY"}
+                        {paymentLoading ? (
+                          <>
+                            <Spinner as="span" animation="border" size="sm" />
+                            {" Processing..."}
+                          </>
+                        ) : "PAY"}
                       </Button>
                     </Card.Body>
                   </Card>
@@ -146,7 +263,21 @@ const VendorDashboard = () => {
           <>
             <h4 className="mb-4 text-center">Tax History</h4>
             {loading ? (
-              <div className="text-center">Loading transactions...</div>
+              <div className="text-center">
+                <Spinner animation="border" />
+                <p>Loading transactions...</p>
+              </div>
+            ) : error ? (
+              <Alert variant="danger">
+                {error}
+                <Button 
+                  variant="link" 
+                  onClick={fetchTransactions}
+                  className="p-0 ms-2"
+                >
+                  Retry
+                </Button>
+              </Alert>
             ) : (
               <Table striped bordered hover responsive>
                 <thead>
@@ -163,7 +294,7 @@ const VendorDashboard = () => {
                   {transactions.length > 0 ? (
                     transactions.map((txn) => (
                       <tr key={txn.id}>
-                        <td>{new Date(txn.created_at).toLocaleDateString()}</td>
+                        <td>{new Date(txn.created_at).toLocaleString()}</td>
                         <td>{txn.account_reference}</td>
                         <td>{txn.amount.toLocaleString()}</td>
                         <td>{txn.phone_number}</td>
@@ -180,7 +311,26 @@ const VendorDashboard = () => {
                             {txn.status}
                           </span>
                         </td>
-                        <td>{txn.receipt_number || "N/A"}</td>
+                        <td>
+                          {txn.status === 'Completed' && txn.receipt_number ? (
+                            <>
+                              <Button 
+                                variant="link" 
+                                onClick={() => handleViewReceipt(txn)}
+                                className="p-0 me-2"
+                              >
+                                View
+                              </Button>
+                              <Button 
+                                variant="link" 
+                                onClick={() => handleDownloadReceipt(txn.id)}
+                                className="p-0"
+                              >
+                                Download
+                              </Button>
+                            </>
+                          ) : 'N/A'}
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -267,6 +417,13 @@ const VendorDashboard = () => {
         handleClose={() => setShowModal(false)}
         category={selectedCategory}
         onPaymentSuccess={handlePaymentSuccess}
+        setPaymentLoading={setPaymentLoading}
+      />
+
+      <Receipt 
+        transaction={selectedTransaction}
+        show={showReceipt}
+        onHide={() => setShowReceipt(false)}
       />
 
       {/* Mobile Header */}
@@ -276,8 +433,8 @@ const VendorDashboard = () => {
       >
         <div className="d-flex justify-content-between align-items-center">
           <div>
-            <div className="fw-bold">OLIVIA JEPTUM</div>
-            <small>Grocery seller</small>
+            <div className="fw-bold">{user?.full_name || "VENDOR"}</div>
+            <small>{user?.business_type || "Vendor"}</small>
           </div>
           <img
             src="/images/profile.jpg"
