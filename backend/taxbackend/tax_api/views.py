@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from rest_framework.permissions import IsAdminUser
 
 from .serializers import UserSerializer
 from .permissions import IsVendor, IsAdmin
@@ -14,6 +15,9 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from .models import PaymentTransaction
+
+from .models import User
+from rest_framework.permissions import IsAdminUser
 
 def generate_pdf_receipt(request, tx_id):
     transaction = get_object_or_404(PaymentTransaction, transaction_id=tx_id)
@@ -114,3 +118,11 @@ class VendorDashboardAPI(APIView):
 
     def get(self, request):
         return Response({"message": "Welcome to the Vendor Dashboard!"})
+
+class RegisteredUsersAPI(APIView):
+    permission_classes = [IsAdmin] 
+
+    def get(self, request):
+        users = User.objects.all().order_by('-date_registered')
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)

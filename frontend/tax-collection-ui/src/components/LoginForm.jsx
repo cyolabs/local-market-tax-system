@@ -1,7 +1,7 @@
 // src/components/LoginForm.jsx
 import React, { useState } from 'react';
-import { PersonFill, LockFill } from 'react-bootstrap-icons';
-import PropTypes from 'prop-types'; // Added for prop validation
+import { PersonFill, LockFill, Building } from 'react-bootstrap-icons';
+import PropTypes from 'prop-types';
 
 export default function LoginForm({ onSubmit }) {
   const [formData, setFormData] = useState({
@@ -20,7 +20,6 @@ export default function LoginForm({ onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Only submit the fields your backend expects
     onSubmit({
       username: formData.username,
       password: formData.password
@@ -28,60 +27,84 @@ export default function LoginForm({ onSubmit }) {
   };
 
   return (
-    <form className="signup-form" onSubmit={handleSubmit}>
-      <div className="input-group">
-        <PersonFill className="icon" />
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          required
-          onChange={handleChange}
-          autoComplete="username"
-        />
-      </div>
+    <div
+      className="p-4"
+      style={{
+        backgroundColor: '#ffffff',
+        color: '#333',
+        borderRadius: '10px',
+        boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+        maxWidth: '400px',
+        width: '100%',
+      }}
+    >
 
-      <div className="input-group">
-        <LockFill className="icon" />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          required
-          onChange={handleChange}
-          autoComplete="current-password"
-        />
-      </div>
-
-      <div className="d-flex justify-content-between w-100 mb-3">
-        <div className="form-check">
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3 position-relative">
+          <PersonFill className="position-absolute top-50 start-0 translate-middle-y ms-2 text-muted" />
           <input
-            type="checkbox"
-            className="form-check-input"
-            id="remember"
-            name="remember"
-            checked={formData.remember}
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={formData.username}
+            required
             onChange={handleChange}
+            autoComplete="username"
+            className="form-control ps-5"
+            style={{ backgroundColor: '#f8f9fa' }}
           />
-          <label className="form-check-label" htmlFor="remember">
-            Remember me
-          </label>
         </div>
-        <a href="#" className="text-primary small text-decoration-none">
-          Forgot password?
-        </a>
-      </div>
 
-      <button type="submit" className="signup-btn">
-        Login
-      </button>
-    </form>
+        <div className="mb-3 position-relative">
+          <LockFill className="position-absolute top-50 start-0 translate-middle-y ms-2 text-muted" />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            required
+            onChange={handleChange}
+            autoComplete="current-password"
+            className="form-control ps-5"
+            style={{ backgroundColor: '#f8f9fa' }}
+          />
+        </div>
+
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <div className="form-check">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id="remember"
+              name="remember"
+              checked={formData.remember}
+              onChange={handleChange}
+            />
+            <label className="form-check-label text-secondary" htmlFor="remember">
+              Remember me
+            </label>
+          </div>
+          <a href="#" className="text-decoration-none small text-secondary">
+            Forgot password?
+          </a>
+        </div>
+
+        <button
+          type="submit"
+          className="btn w-100"
+          style={{
+            backgroundColor: '#b30000', // Deep red
+            color: '#fff',
+            fontWeight: 'bold',
+          }}
+        >
+          Login
+        </button>
+      </form>
+    </div>
   );
 }
 
-// Added prop validation
 LoginForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
 };

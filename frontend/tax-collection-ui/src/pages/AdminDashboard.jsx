@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+// AdminDashboard.jsx
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -13,6 +15,16 @@ import {
   FormControl,
   Form,
 } from "react-bootstrap";
+import {
+  Bell,
+  Translate,
+  CurrencyExchange,
+  Percent,
+  Trash,
+  ChevronDown,
+  ChevronRight,
+} from "react-bootstrap-icons";
+
 import {
   BarChart,
   Bar,
@@ -51,28 +63,55 @@ const topMarkets = [
   "Kipkaren Market",
 ];
 
-const VendorDashboard = () => {
+const AdminDashboard = () => {
   const [activeView, setActiveView] = useState("dashboard");
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { currentUser, token, logout } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get("/admin/vendors/", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUsers(response.data);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (activeView === "registered") {
+      fetchUsers();
+    }
+  }, [token, activeView]);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const renderDashboard = () => (
     <>
-      {/* Stat Cards */}
       <div className="d-flex gap-3 flex-wrap mb-4">
-        <Card className="shadow-sm text-center flex-grow-1" style={{ minWidth: "200px" }}>
+        <Card className="shadow-sm text-center flex-grow-1" style={{ minWidth: "200px", backgroundColor: "#FFFAFA" }}>
           <Card.Body>
             <div>📝</div>
             <h6 className="text-muted">Registered traders</h6>
-            <h3 className="fw-bold text-danger">12,410</h3>
+            <h3 className="fw-bold text-danger">{users.length}</h3>
           </Card.Body>
         </Card>
-        <Card className="shadow-sm text-center flex-grow-1" style={{ minWidth: "200px" }}>
+        <Card className="shadow-sm text-center flex-grow-1" style={{ minWidth: "200px", backgroundColor: "#FFFAFA" }}>
           <Card.Body>
             <div>💵</div>
             <h6 className="text-muted">Total tax/week</h6>
             <h4 className="fw-bold text-primary">Ksh. 100,350</h4>
           </Card.Body>
         </Card>
-        <Card className="shadow-sm text-center flex-grow-1" style={{ minWidth: "200px" }}>
+        <Card className="shadow-sm text-center flex-grow-1" style={{ minWidth: "200px", backgroundColor: "#FFFAFA" }}>
           <Card.Body>
             <div>📊</div>
             <h6 className="text-muted">Collection Rate %</h6>
@@ -81,7 +120,6 @@ const VendorDashboard = () => {
         </Card>
       </div>
 
-      {/* Chart and Markets */}
       <Row>
         <Col md={8}>
           <Card className="shadow-sm mb-4">
@@ -91,7 +129,7 @@ const VendorDashboard = () => {
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
-                  <YAxis tickFormatter={(val) => `${val}M`} />
+                  <YAxis />
                   <Tooltip />
                   <Bar dataKey="tax" fill="#f9b233" />
                 </BarChart>
@@ -104,199 +142,102 @@ const VendorDashboard = () => {
             <Card.Header className="fw-bold text-danger">Top Markets</Card.Header>
             <ListGroup variant="flush">
               {topMarkets.map((market, idx) => (
-                <ListGroup.Item key={idx}>
-                  {idx + 1}. {market}
-                </ListGroup.Item>
+                <ListGroup.Item key={idx}>{idx + 1}. {market}</ListGroup.Item>
               ))}
             </ListGroup>
           </Card>
         </Col>
       </Row>
-
-      {/* Outstanding Tax and Suspend */}
-      <div className="d-flex gap-3 flex-wrap">
-        <Card className="shadow-sm text-center flex-grow-1" style={{ minWidth: "220px" }}>
-          <Card.Body>
-            <h6 className="text-muted">Outstanding tax</h6>
-            <h4 className="fw-bold text-danger">Ksh. 40,140</h4>
-            <div className="text-danger">40%</div>
-          </Card.Body>
-        </Card>
-        <Card className="shadow-sm text-center flex-grow-1 border border-danger" style={{ minWidth: "240px" }}>
-          <Card.Body>
-            <h6 className="text-muted mb-3">Suspend not paying vendors</h6>
-            <Button variant="success">Open to suspend</Button>
-          </Card.Body>
-        </Card>
-      </div>
     </>
   );
 
   const renderRegisteredUsers = () => (
     <>
-      <InputGroup className="mb-3 w-50">
-        <FormControl placeholder="Search ..." />
-      </InputGroup>
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Gender</th>
-            <th>National ID</th>
-            <th>Business Type</th>
-            <th>Market</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array(10).fill().map((_, i) => (
-            <tr key={i}>
-              <td>Daniel Ogera</td>
-              <td>{i % 2 === 0 ? "Male" : "Female"}</td>
-              <td>38406341</td>
-              <td>Grocery seller</td>
-              <td>Baraton</td>
+      <h4 className="fw-bold mb-3">Registered Users</h4>
+      {loading ? (
+        <p>Loading users...</p>
+      ) : (
+        <Table striped bordered hover responsive>
+          <thead style={{ backgroundColor: "#663B53", color: "white" }}>
+            <tr>
+              <th>Full Name</th>
+              <th>Username</th>
+              <th>National ID</th>
+              <th>Market</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Business Type</th>
+              <th>Gender</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.national_id}>
+                <td>{user.full_name}</td>
+                <td>{user.username}</td>
+                <td>{user.national_id}</td>
+                <td>{user.market_of_operation}</td>
+                <td>{user.email}</td>
+                <td>{user.role}</td>
+                <td>{user.business_type}</td>
+                <td>{user.gender}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
     </>
   );
 
   const renderTaxReports = () => (
-    <>
-      <h4 className="mb-4">Tax Compliance Overview</h4>
-      <Card className="p-3 mb-4">
-        <h5>Monthly Revenue Trends</h5>
-        <img src="/images/tax-trend.png" alt="Trend" style={{ width: "100%" }} />
-        <Button className="mt-3" variant="success">Download</Button>
-      </Card>
-      <Card className="p-3">
-        <h5>Market Population</h5>
-        <img src="/images/market-population.png" alt="Population" style={{ width: "100%" }} />
-        <Button className="mt-3" variant="success">Download</Button>
-      </Card>
-    </>
+    <Card className="p-3">
+      <h5>Tax Report Placeholder</h5>
+      <p>Add real charts/data here...</p>
+    </Card>
   );
 
   const renderFeedback = () => (
-    <>
-      <InputGroup className="mb-3 w-50">
-        <FormControl placeholder="Search ..." />
-      </InputGroup>
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>Sender</th>
-            <th>Subject</th>
-            <th>Market</th>
-            <th>Message</th>
-            <th>Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array(10).fill().map((_, i) => (
-            <tr key={i}>
-              <td>Daniel Ogera</td>
-              <td>Complain</td>
-              <td>Baraton</td>
-              <td>The market is dirty and we have been ...</td>
-              <td>Apr 22, 2024 14:31</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </>
+    <Card className="p-3">
+      <h5>Feedback Placeholder</h5>
+      <p>Show user feedback here...</p>
+    </Card>
   );
 
   const renderSettings = () => (
-    <Card className="shadow-sm">
-      <Card.Body className="text-center">
-        <img
-          src="/mnt/data/settings.png"
-          alt="Settings UI"
-          style={{ width: "100%", maxWidth: "900px", borderRadius: "8px" }}
-        />
-      </Card.Body>
-    </Card>
+    <Container>
+      <h5 className="text-center fw-bold mb-4">Settings</h5>
+      <Row className="py-2 border-bottom">
+        <Col xs={1}><Bell size={20} /></Col>
+        <Col>Notifications</Col>
+        <Col xs={2}><Form.Check type="switch" defaultChecked /></Col>
+      </Row>
+    </Container>
   );
-  
-  const { currentUser, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
-      <div className="d-flex">
-        {/* Sidebar */}
-        <div
-          style={{ width: "250px", background: "#d3cbc7", minHeight: "100vh" }}
-          className="d-flex flex-column justify-content-between p-3"
-        >
-          <div>
-            <Button
-              variant={activeView === "dashboard" ? "dark" : "outline-secondary"}
-              className="w-100 mb-3 text-start fw-bold"
-              onClick={() => setActiveView("dashboard")}
-            >
-              📊 Dashboard
-            </Button>
-            <Button
-              variant={activeView === "registered" ? "dark" : "outline-secondary"}
-              className="w-100 mb-3 text-start"
-              onClick={() => setActiveView("registered")}
-            >
-              📝 Registered
-            </Button>
-            <Button
-              variant={activeView === "tax" ? "dark" : "outline-secondary"}
-              className="w-100 mb-3 text-start"
-              onClick={() => setActiveView("tax")}
-            >
-              📈 Tax Report
-            </Button>
-            <Button
-              variant={activeView === "feedback" ? "dark" : "outline-secondary"}
-              className="w-100 mb-3 text-start"
-              onClick={() => setActiveView("feedback")}
-            >
-              💬 Feedback
-            </Button>
-          </div>
-          <div>
-            <Button
-              style={{ backgroundColor: "#6e4a4a", color: "white" }}
-              className="w-100 mb-2 text-start"
-              onClick={() => setActiveView("settings")}
-            >
-              ⚙️ Settings
-            </Button>
-            <Button
-              onClick={handleLogout}
-              style={{ backgroundColor: "#e9f4eb", color: "black" }}
-              className="w-100 text-start"
-            >
-              ⬅️ Logout
-            </Button>
-          </div>
+    <div className="d-flex" style={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
+      <div style={{ width: "250px", background: "#d3cbc7" }} className="p-3 d-flex flex-column justify-content-between">
+        <div>
+          <Button className="w-100 mb-2 text-start" variant={activeView === "dashboard" ? "dark" : "outline-secondary"} onClick={() => setActiveView("dashboard")}>📊 Dashboard</Button>
+          <Button className="w-100 mb-2 text-start" variant={activeView === "registered" ? "dark" : "outline-secondary"} onClick={() => setActiveView("registered")}>📝 Registered</Button>
+          <Button className="w-100 mb-2 text-start" variant={activeView === "tax" ? "dark" : "outline-secondary"} onClick={() => setActiveView("tax")}>📈 Tax Report</Button>
+          <Button className="w-100 mb-2 text-start" variant={activeView === "feedback" ? "dark" : "outline-secondary"} onClick={() => setActiveView("feedback")}>💬 Feedback</Button>
         </div>
+        <div>
+          <Button className="w-100 mb-2 text-start" variant="secondary" onClick={() => setActiveView("settings")}>⚙️ Settings</Button>
+          <Button className="w-100 text-start" style={{ backgroundColor: "#e9f4eb" }} onClick={handleLogout}>⬅️ Logout</Button>
+        </div>
+      </div>
 
-        {/* Content Area */}
-        <div className="flex-grow-1 p-4">
-          {activeView === "dashboard" && renderDashboard()}
-          {activeView === "registered" && renderRegisteredUsers()}
-          {activeView === "tax" && renderTaxReports()}
-          {activeView === "feedback" && renderFeedback()}
-          {activeView === "settings" && renderSettings()}
-        </div>
+      <div className="flex-grow-1 p-4">
+        {activeView === "dashboard" && renderDashboard()}
+        {activeView === "registered" && renderRegisteredUsers()}
+        {activeView === "tax" && renderTaxReports()}
+        {activeView === "feedback" && renderFeedback()}
+        {activeView === "settings" && renderSettings()}
       </div>
     </div>
   );
 };
 
-export default VendorDashboard;
+export default AdminDashboard;
