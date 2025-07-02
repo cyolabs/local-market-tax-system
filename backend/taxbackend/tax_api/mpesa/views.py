@@ -65,10 +65,32 @@ class TransactionHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        transactions = PaymentTransaction.objects.filter(user=request.user).order_by('-created_at')
-        serializer = PaymentTransactionSerializer(transactions, many=True)
-        return Response(serializer.data)
-
+        try:
+            transactions = PaymentTransaction.objects.filter(
+                user=request.user
+            ).order_by('-created_at')
+            
+            if not transactions.exists():
+                return Response(
+                    {"message": "No transactions found"},
+                    status=status.HTTP_200_OK
+                )
+                
+            serializer = PaymentTransactionSerializer(transactions, many=True)
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+            
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
 @method_decorator(csrf_exempt, name='dispatch')
 class DownloadReceiptView(APIView):
     permission_classes = [IsAuthenticated]

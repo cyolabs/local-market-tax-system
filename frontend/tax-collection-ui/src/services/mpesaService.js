@@ -39,10 +39,14 @@ export const downloadReceipt = async (transactionId) => {
 
 export const getPaymentTransactions = async () => {
   try {
-    const response = await api.get('/api/payment-transactions/');
+    const response = await api.get('/api/transactions/history/'); // Changed endpoint
     return response.data;
   } catch (error) {
-    console.error('Error fetching transactions:', error);
-    throw error;
+    console.error('Error details:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      config: error.config
+    });
+    throw new Error(error.response?.data?.message || 'Failed to fetch transactions. Please try again.');
   }
 };
