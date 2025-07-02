@@ -191,15 +191,11 @@ const AdminDashboard = () => {
 
   const renderTaxReports = () => (
     <Card className="p-3">
-      <h5>Tax Report Placeholder</h5>
-      <p>Add real charts/data here...</p>
     </Card>
   );
 
   const renderFeedback = () => (
     <Card className="p-3">
-      <h5>Feedback Placeholder</h5>
-      <p>Show user feedback here...</p>
     </Card>
   );
 
