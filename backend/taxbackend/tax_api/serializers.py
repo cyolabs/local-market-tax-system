@@ -2,6 +2,13 @@ from rest_framework import serializers
 from .models import User
 from .models import PaymentTransaction
 from django.contrib.auth.password_validation import validate_password
+from .models import Feedback
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = ['id', 'user', 'subject', 'message', 'submitted_at']
+        read_only_fields = ['id', 'submitted_at']
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+
+import { submitFeedback } from "../services/api";
 import {
   Container,
   Row,
@@ -181,13 +183,20 @@ const VendorDashboard = () => {
     }
   };
 
-  const handleFeedbackSubmit = (e) => {
-    e.preventDefault();
+
+const handleFeedbackSubmit = async (e) => {
+  e.preventDefault();
+  const result = await submitFeedback(feedbackSubject, feedbackMessage);
+  if (result.success) {
     setFeedbackSuccess("Thank you for your feedback!");
     setFeedbackSubject("");
     setFeedbackMessage("");
     setTimeout(() => setFeedbackSuccess(""), 3000);
-  };
+  } else {
+    setError(result.message || "Failed to submit feedback");
+  }
+};
+
 
   useEffect(() => {
     if (activeSection === "tax-history") {

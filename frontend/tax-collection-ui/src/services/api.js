@@ -1,4 +1,25 @@
 import axios from 'axios';
+import { getToken } from "./AuthService"
+
+export const submitFeedback = async (subject, message) => {
+  try {
+    const res = await axios.post(
+      "/api/feedback/",
+      { subject, message },
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Feedback submit error:", err);
+    return { success: false, message: err.response?.data || "Error submitting feedback" };
+  }
+};
+
+
 
 axios.defaults.withCredentials = true;
 axios.defaults.xsrfHeaderName = "X-CSRFToken";

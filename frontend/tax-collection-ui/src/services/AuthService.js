@@ -14,3 +14,7 @@ export const storeTokens = (data) => {
     localStorage.setItem('access', data.access);
     localStorage.setItem('refresh', data.refresh);
 };
+
+export function getToken() {
+  return localStorage.getItem("access");
+}
