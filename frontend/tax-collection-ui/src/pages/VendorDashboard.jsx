@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+
+import { submitFeedback } from "../services/api";
 import {
   Container,
   Row,
@@ -25,9 +27,9 @@ const categories = [
   { title: "Livestock and meat", image: "/images/livestock.jpg", amount: 1500 },
   { title: "Fish vendors", image: "/images/fish.jpg", amount: 800 },
   { title: "Clothes and textile", image: "/images/clothes.jpg", amount: 600 },
-  { title: "Clothing and textile", image: "/images/clothing.jpg", amount: 600 },
   { title: "Household goods", image: "/images/household.jpg", amount: 700 },
 ];
+
 
 const Receipt = ({ transaction, show, onHide }) => {
   if (!transaction) return null;
@@ -181,13 +183,20 @@ const VendorDashboard = () => {
     }
   };
 
-  const handleFeedbackSubmit = (e) => {
-    e.preventDefault();
+
+const handleFeedbackSubmit = async (e) => {
+  e.preventDefault();
+  const result = await submitFeedback(feedbackSubject, feedbackMessage);
+  if (result.success) {
     setFeedbackSuccess("Thank you for your feedback!");
     setFeedbackSubject("");
     setFeedbackMessage("");
     setTimeout(() => setFeedbackSuccess(""), 3000);
-  };
+  } else {
+    setError(result.message || "Failed to submit feedback");
+  }
+};
+
 
   useEffect(() => {
     if (activeSection === "tax-history") {
