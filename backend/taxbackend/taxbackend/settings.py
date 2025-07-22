@@ -39,6 +39,7 @@ INSTALLED_APPS = [
 
     # Your apps
     'tax_api',
+    'mpesa',
 ]
 
 MIDDLEWARE = [
