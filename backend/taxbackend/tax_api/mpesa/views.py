@@ -37,6 +37,7 @@ class InitiateSTKPushView(APIView):
             
             transaction = PaymentTransaction.objects.create(
                 phone_number=phone_number,
+                user=request.user,
                 amount=amount,
                 account_reference=account_reference,
                 description=transaction_desc,
