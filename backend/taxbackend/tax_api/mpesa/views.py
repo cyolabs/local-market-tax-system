@@ -71,27 +71,21 @@ class TransactionHistoryView(APIView):
                 user=request.user
             ).order_by('-created_at')
             
-            if not transactions.exists():
-                return Response(
-                    {"message": "No transactions found"},
-                    status=status.HTTP_200_OK
-                )
-                
             serializer = PaymentTransactionSerializer(transactions, many=True)
+            
             return Response({
                 "success": True,
+                "message": "Transactions retrieved successfully",
                 "data": serializer.data
             })
             
         except Exception as e:
-            return Response(
-                {
-                    "success": False,
-                    "message": str(e)
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        
+            logger.error(f"Transaction History Error - User {request.user.id}: {str(e)}")
+            return Response({
+                "success": False,
+                "message": "Failed to retrieve transactions",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)     
 @method_decorator(csrf_exempt, name='dispatch')
 class DownloadReceiptView(APIView):
     permission_classes = [IsAuthenticated]
