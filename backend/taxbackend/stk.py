@@ -44,7 +44,7 @@ def initiate_stk_push():
         "PartyA": phone,
         "PartyB": int(business_short_code),
         "PhoneNumber": phone,
-        "CallBackURL": "https://local-market-tax-system-7fuw.onrender.com/mpesa-callback/",
+        "CallBackURL": "https://local-market-tax-system-7fuw.onrender.com/callback/",
         "AccountReference": "TEST",
         "TransactionDesc": "Test Payment"
     }
