@@ -39,14 +39,20 @@ export const downloadReceipt = async (transactionId) => {
 
 export const getPaymentTransactions = async () => {
   try {
-    const response = await api.get('/api/transactions/history/'); // Changed endpoint
-    return response.data;
+    const response = await api.get('/api/mpesa/transactions/history/'); 
+    return {
+      success: true,
+      data: response.data.data || response.data // Handle both response formats
+    };
   } catch (error) {
-    console.error('Error details:', {
+    console.error('Transaction History Error:', {
       status: error.response?.status,
       data: error.response?.data,
       config: error.config
     });
-    throw new Error(error.response?.data?.message || 'Failed to fetch transactions. Please try again.');
+    return {  // Return object instead of throwing
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch transactions'
+    };
   }
 };

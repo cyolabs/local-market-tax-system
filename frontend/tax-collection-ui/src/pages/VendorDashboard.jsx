@@ -126,22 +126,22 @@ const VendorDashboard = () => {
     setShowModal(true);
   };
 
-  const fetchTransactions = async () => {
+ const fetchTransactions = async () => {
   try {
     setLoading(true);
     setError(null);
-    const response = await getPaymentTransactions();
     
-    if (response?.success) {
+    const response = await getPaymentTransactions();
+    console.log('Transactions Response:', response); // Debug
+    
+    if (response.success) {
       setTransactions(response.data || []);
     } else {
-      setError(response?.message || "No transactions data received");
-      setTransactions([]);
+      setError(response.message);
     }
   } catch (err) {
-    console.error("Fetch error:", err);
-    setError(err.message);
-    setTransactions([]);
+    console.error("Unexpected error:", err);
+    setError("An unexpected error occurred");
   } finally {
     setLoading(false);
   }
