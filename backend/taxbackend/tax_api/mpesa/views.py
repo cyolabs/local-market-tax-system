@@ -62,30 +62,38 @@ class InitiateSTKPushView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 @method_decorator(csrf_exempt, name='dispatch')
-class TransactionHistoryView(APIView):
-    permission_classes = [IsAuthenticated]
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
-    def get(self, request):
-        try:
-            transactions = PaymentTransaction.objects.filter(
-                user=request.user
-            ).order_by('-created_at')
-            
-            serializer = PaymentTransactionSerializer(transactions, many=True)
-            
-            return Response({
-                "success": True,
-                "message": "Transactions retrieved successfully",
-                "data": serializer.data
-            })
-            
-        except Exception as e:
-            logger.error(f"Transaction History Error - User {request.user.id}: {str(e)}")
+def get(self, request):
+    try:
+        if not request.user or not isinstance(request.user, User):
+            logger.error("Invalid user in request")
             return Response({
                 "success": False,
-                "message": "Failed to retrieve transactions",
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)     
+                "message": "Invalid user. Please login again."
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        transactions = PaymentTransaction.objects.filter(
+            user=request.user
+        ).order_by('-created_at')
+        
+        serializer = PaymentTransactionSerializer(transactions, many=True)
+        
+        return Response({
+            "success": True,
+            "message": "Transactions retrieved successfully",
+            "data": serializer.data
+        })
+        
+    except Exception as e:
+        logger.error(f"Transaction History Error - User {request.user.id if request.user else 'None'}: {str(e)}")
+        return Response({
+            "success": False,
+            "message": "Failed to retrieve transactions",
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+   
 @method_decorator(csrf_exempt, name='dispatch')
 class DownloadReceiptView(APIView):
     permission_classes = [IsAuthenticated]
