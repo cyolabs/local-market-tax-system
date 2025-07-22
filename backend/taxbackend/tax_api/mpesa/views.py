@@ -13,6 +13,9 @@ from reportlab.pdfgen import canvas
 import io
 from datetime import datetime
 from ..serializers import PaymentTransactionSerializer
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,10 +65,8 @@ class InitiateSTKPushView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 @method_decorator(csrf_exempt, name='dispatch')
-from django.contrib.auth import get_user_model
-User = get_user_model()
-
-def get(self, request):
+class TransactionHistoryView(APIView):
+ def get(self, request):
     try:
         if not request.user or not isinstance(request.user, User):
             logger.error("Invalid user in request")
@@ -92,8 +93,7 @@ def get(self, request):
             "success": False,
             "message": "Failed to retrieve transactions",
             "error": str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-   
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
 @method_decorator(csrf_exempt, name='dispatch')
 class DownloadReceiptView(APIView):
     permission_classes = [IsAuthenticated]
