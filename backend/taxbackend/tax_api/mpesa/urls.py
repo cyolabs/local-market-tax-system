@@ -3,14 +3,14 @@ from .views import (
     InitiateSTKPushView,
     TransactionHistoryView,
     DownloadReceiptView,
-    mpesa_callback_view,
+    stk_callback,
     PaymentTransactionDetailView
 )
 
 urlpatterns = [
-    path('mpesa/initiate/', InitiateSTKPushView.as_view(), name='initiate-stk-push'),
-    path('mpesa/transactions/', TransactionHistoryView.as_view(), name='transaction-history'),
-    path('mpesa/receipt/<str:transaction_id>/', DownloadReceiptView.as_view(), name='download-receipt'),
-    path('mpesa/callback/', mpesa_callback_view, name='mpesa-callback'),
-    path('mpesa/transaction/<int:transaction_id>/', PaymentTransactionDetailView.as_view(), name='transaction-detail'),
+    path('api/mpesa/initiate-stk-push/', InitiateSTKPushView.as_view(), name='initiate_stk_push'),
+    path('api/mpesa/transactions/history/', TransactionHistoryView.as_view(), name='transaction_history'),
+    path('api/mpesa/receipt/<str:transaction_id>/', DownloadReceiptView.as_view(), name='download_receipt'),
+    path('api/mpesa/callback/', stk_callback, name='stk_callback'),
+    path('api/mpesa/transactions/<str:transaction_id>/', PaymentTransactionDetailView.as_view(), name='transaction_detail'),
 ]
