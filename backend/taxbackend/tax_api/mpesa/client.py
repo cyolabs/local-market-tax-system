@@ -1,85 +1,78 @@
+import os
 import base64
-from datetime import datetime
 import requests
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_v1_5
-import json
-from django.conf import settings
+from datetime import datetime
+from dotenv import load_dotenv
 import logging
 
-token_url = settings.MPESA_TOKEN_API_URL
-
+load_dotenv()
 logger = logging.getLogger(__name__)
 
 class MpesaClient:
     def __init__(self):
-        self.consumer_key = settings.MPESA_CONSUMER_KEY
-        self.consumer_secret = settings.MPESA_CONSUMER_SECRET
-        self.passkey = settings.MPESA_PASSKEY
-        self.business_shortcode = settings.MPESA_BUSINESS_SHORTCODE
-        self.callback_url = settings.MPESA_CALLBACK_URL
-        self.token_api_url = settings.MPESA_TOKEN_API_URL
-        self.stk_push_url = settings.MPESA_STK_PUSH_URL
-        self.access_token = None
-        
-    def get_access_token(self):
+        self.consumer_key = os.getenv('MPESA_CONSUMER_KEY')
+        self.consumer_secret = os.getenv('MPESA_CONSUMER_SECRET')
+        self.business_shortcode = os.getenv('MPESA_BUSINESS_SHORTCODE')
+        self.passkey = os.getenv('MPESA_PASSKEY')
+        self.callback_url = os.getenv('MPESA_CALLBACK_URL')
+        self.base_url = os.getenv('MPESA_BASE_URL')
+
+    def generate_access_token(self):
         try:
-            auth_string = f"{self.consumer_key}:{self.consumer_secret}"
-            encoded_auth = base64.b64encode(auth_string.encode()).decode()
-            
+            credentials = f"{self.consumer_key}:{self.consumer_secret}"
+            encoded_credentials = base64.b64encode(credentials.encode()).decode()
+
             headers = {
-                "Authorization": f"Basic {encoded_auth}"
+                "Authorization": f"Basic {encoded_credentials}",
+                "Content-Type": "application/json",
             }
-            
-            response = requests.get(self.token_api_url, headers=headers)
-            response.raise_for_status()
-            
-            self.access_token = response.json().get("access_token")
-            return self.access_token
-            
-        except Exception as e:
-            logger.error(f"Error getting access token: {str(e)}")
+
+            response = requests.get(
+                f"{self.base_url}/oauth/v1/generate?grant_type=client_credentials",
+                headers=headers
+            ).json()
+
+            if 'access_token' in response:
+                return response['access_token']
+            else:
+                raise Exception("Access token error: " + str(response))
+        except requests.RequestException as e:
+            logger.error(f"Network error during access token request: {str(e)}")
             raise
-            
-    def generate_password(self):
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        password_string = f"{self.business_shortcode}{self.passkey}{timestamp}"
-        encoded_password = base64.b64encode(password_string.encode()).decode()
-        return encoded_password, timestamp
-    MPESA_BUSINESS_SHORTCODE = "174379"  # Sandbox Till
-    MPESA_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919" 
-        
-    def stk_push(self, phone_number, amount, account_reference, transaction_desc):
+
+    def stk_push(self, phone, amount, account_reference="TaxPayment", transaction_desc="Payment for local market tax"):
         try:
-            if not self.access_token:
-                self.get_access_token()
-                
-            password, timestamp = self.generate_password()
-            
+            access_token = self.generate_access_token()
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            stk_password = base64.b64encode(
+                (self.business_shortcode + self.passkey + timestamp).encode()).decode()
+
             headers = {
-                "Authorization": f"Bearer {self.access_token}",
-                "Content-Type": "application/json"
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
             }
-            
+
             payload = {
                 "BusinessShortCode": self.business_shortcode,
-                "Password": password,
+                "Password": stk_password,
                 "Timestamp": timestamp,
                 "TransactionType": "CustomerPayBillOnline",
                 "Amount": amount,
-                "PartyA": phone_number,
+                "PartyA": phone,
                 "PartyB": self.business_shortcode,
-                "PhoneNumber": phone_number,
+                "PhoneNumber": phone,
                 "CallBackURL": self.callback_url,
                 "AccountReference": account_reference,
                 "TransactionDesc": transaction_desc
             }
-            
-            response = requests.post(self.stk_push_url, headers=headers, json=payload)
-            response.raise_for_status()
-            
-            return response.json()
-            
+
+            response = requests.post(
+                f"{self.base_url}/mpesa/stkpush/v1/processrequest",
+                headers=headers,
+                json=payload
+            ).json()
+
+            return response
         except Exception as e:
-            logger.error(f"Error in STK push: {str(e)}")
+            logger.error(f"STK push error: {str(e)}")
             raise
