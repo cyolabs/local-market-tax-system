@@ -2,26 +2,25 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from .client import MpesaClient
 from ..models import PaymentTransaction
 from ..serializers import PaymentTransactionSerializer
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-import logging
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
 import io
+import logging
 from datetime import datetime
-from ..serializers import PaymentTransactionSerializer
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
-
-
 logger = logging.getLogger(__name__)
 
-@method_decorator(csrf_exempt, name='dispatch')
+
 class InitiateSTKPushView(APIView):
-    permission_classes = [IsAuthenticated]  # Moved inside the class
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         try:
@@ -29,7 +28,7 @@ class InitiateSTKPushView(APIView):
             amount = float(request.data.get('amount'))
             account_reference = request.data.get('account_reference', 'TAX_PAYMENT')
             transaction_desc = request.data.get('transaction_desc', 'Tax Payment')
-            
+
             mpesa_client = MpesaClient()
             response = mpesa_client.stk_push(
                 phone_number=phone_number,
@@ -37,7 +36,7 @@ class InitiateSTKPushView(APIView):
                 account_reference=account_reference,
                 transaction_desc=transaction_desc
             )
-            
+
             transaction = PaymentTransaction.objects.create(
                 phone_number=phone_number,
                 user=request.user,
@@ -48,15 +47,15 @@ class InitiateSTKPushView(APIView):
                 checkout_request_id=response.get('CheckoutRequestID'),
                 status='Pending'
             )
-            
+
             serializer = PaymentTransactionSerializer(transaction)
-            
+
             return Response({
                 'success': True,
                 'message': 'STK push initiated successfully',
                 'data': serializer.data
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             logger.error(f"Error initiating STK push: {str(e)}")
             return Response({
@@ -64,37 +63,33 @@ class InitiateSTKPushView(APIView):
                 'message': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-@method_decorator(csrf_exempt, name='dispatch')
+
 class TransactionHistoryView(APIView):
- def get(self, request):
-    try:
-        if not request.user or not isinstance(request.user, User):
-            logger.error("Invalid user in request")
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            transactions = PaymentTransaction.objects.filter(
+                user=request.user
+            ).order_by('-created_at')
+
+            serializer = PaymentTransactionSerializer(transactions, many=True)
+
+            return Response({
+                "success": True,
+                "message": "Transactions retrieved successfully",
+                "data": serializer.data
+            })
+
+        except Exception as e:
+            logger.error(f"Transaction History Error - User {request.user.id if request.user else 'None'}: {str(e)}")
             return Response({
                 "success": False,
-                "message": "Invalid user. Please login again."
-            }, status=status.HTTP_401_UNAUTHORIZED)
+                "message": "Failed to retrieve transactions",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        transactions = PaymentTransaction.objects.filter(
-            user=request.user
-        ).order_by('-created_at')
-        
-        serializer = PaymentTransactionSerializer(transactions, many=True)
-        
-        return Response({
-            "success": True,
-            "message": "Transactions retrieved successfully",
-            "data": serializer.data
-        })
-        
-    except Exception as e:
-        logger.error(f"Transaction History Error - User {request.user.id if request.user else 'None'}: {str(e)}")
-        return Response({
-            "success": False,
-            "message": "Failed to retrieve transactions",
-            "error": str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
-@method_decorator(csrf_exempt, name='dispatch')
+
 class DownloadReceiptView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -105,26 +100,22 @@ class DownloadReceiptView(APIView):
                 user=request.user,
                 status='Completed'
             )
-            
-            # Create PDF with better formatting
+
             buffer = io.BytesIO()
             p = canvas.Canvas(buffer)
-            
-            # Header
+
             p.setFont("Helvetica-Bold", 16)
             p.drawString(100, 800, "COUNTY GOVERNMENT RECEIPT")
             p.setFont("Helvetica", 12)
             p.drawString(100, 780, f"Receipt No: {transaction.receipt_number}")
             p.drawString(100, 760, f"Date: {transaction.created_at.strftime('%Y-%m-%d %H:%M')}")
-            
-            # Line separator
+
             p.line(100, 750, 450, 750)
-            
-            # Transaction details
+
             p.setFont("Helvetica-Bold", 14)
             p.drawString(100, 730, "TRANSACTION DETAILS")
             p.setFont("Helvetica", 12)
-            
+
             details = [
                 ("Vendor:", request.user.full_name),
                 ("Phone:", transaction.phone_number),
@@ -133,68 +124,67 @@ class DownloadReceiptView(APIView):
                 ("Amount:", f"KES {transaction.amount}"),
                 ("Status:", transaction.status),
             ]
-            
+
             y_position = 710
             for label, value in details:
                 p.drawString(100, y_position, label)
                 p.drawString(200, y_position, value)
                 y_position -= 20
-            
-            # Footer
+
             p.setFont("Helvetica-Oblique", 10)
             p.drawString(100, 600, "Thank you for your payment!")
             p.drawString(100, 580, "County Government Revenue System")
-            
+
             p.showPage()
             p.save()
             buffer.seek(0)
-            
+
             response = HttpResponse(buffer, content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="receipt_{transaction.receipt_number}.pdf"'
             return response
-            
+
         except PaymentTransaction.DoesNotExist:
             return Response({"error": "Valid receipt not found"}, status=404)
 
-@method_decorator(csrf_exempt, name='dispatch')
-class MpesaCallbackView(APIView):
-    permission_classes = []
 
-    def post(self, request):
-        try:
-            callback_data = request.data
-            result_code = callback_data.get('Body', {}).get('stkCallback', {}).get('ResultCode')
-            checkout_request_id = callback_data.get('Body', {}).get('stkCallback', {}).get('CheckoutRequestID')
-            
-            transaction = PaymentTransaction.objects.get(checkout_request_id=checkout_request_id)
-            
-            if result_code == 0:
-                callback_metadata = callback_data.get('Body', {}).get('stkCallback', {}).get('CallbackMetadata', {}).get('Item', [])
-                
-                for item in callback_metadata:
-                    if item.get('Name') == 'Amount':
-                        transaction.amount = item.get('Value')
-                    elif item.get('Name') == 'MpesaReceiptNumber':
-                        transaction.receipt_number = item.get('Value')
-                    elif item.get('Name') == 'TransactionDate':
-                        transaction.transaction_date = item.get('Value')
-                    elif item.get('Name') == 'PhoneNumber':
-                        transaction.phone_number = item.get('Value')
-                
-                transaction.status = 'Completed'
-                transaction.save()
-            else:
-                transaction.status = 'Failed'
-                transaction.result_description = callback_data.get('Body', {}).get('stkCallback', {}).get('ResultDesc')
-                transaction.save()
-                
-            return Response({'status': 'success'}, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            logger.error(f"Error processing M-Pesa callback: {str(e)}")
-            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def mpesa_callback_view(request):
+    try:
+        callback_data = request.data
+        result_code = callback_data.get('Body', {}).get('stkCallback', {}).get('ResultCode')
+        checkout_request_id = callback_data.get('Body', {}).get('stkCallback', {}).get('CheckoutRequestID')
 
-@method_decorator(csrf_exempt, name='dispatch')
+        transaction = PaymentTransaction.objects.get(checkout_request_id=checkout_request_id)
+
+        if result_code == 0:
+            callback_metadata = callback_data.get('Body', {}).get('stkCallback', {}).get('CallbackMetadata', {}).get('Item', [])
+
+            for item in callback_metadata:
+                if item.get('Name') == 'Amount':
+                    transaction.amount = item.get('Value')
+                elif item.get('Name') == 'MpesaReceiptNumber':
+                    transaction.receipt_number = item.get('Value')
+                elif item.get('Name') == 'TransactionDate':
+                    transaction.transaction_date = item.get('Value')
+                elif item.get('Name') == 'PhoneNumber':
+                    transaction.phone_number = item.get('Value')
+
+            transaction.status = 'Completed'
+            transaction.save()
+        else:
+            transaction.status = 'Failed'
+            transaction.result_description = callback_data.get('Body', {}).get('stkCallback', {}).get('ResultDesc')
+            transaction.save()
+
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error processing M-Pesa callback: {str(e)}")
+        return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class PaymentTransactionDetailView(APIView):
     def get(self, request, transaction_id):
         try:
