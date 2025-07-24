@@ -1,16 +1,30 @@
 import api from './api';
 
+/**
+ * Initiates an STK Push and polls for transaction history after delay
+ */
 export const initiateSTKPush = async (phoneNumber, amount) => {
   try {
     const response = await api.post('/api/mpesa/initiate-stk-push/', {
       phone_number: phoneNumber,
       amount: parseFloat(amount),
     });
+
+    const checkoutRequestId = response.data.data?.checkout_request_id;
+
+    // Wait 7 seconds before checking transaction status
+    await delay(7000);
+
+    // Fetch user transactions
+    const transactionResult = await getPaymentTransactions();
+
     return {
       success: true,
-      data: response.data,
-      transactionId: response.data.checkout_request_id // Return transaction ID
+      message: 'STK Push initiated and transactions fetched',
+      data: transactionResult.data || [],
+      transactionId: checkoutRequestId
     };
+
   } catch (error) {
     return {
       success: false,
@@ -19,6 +33,9 @@ export const initiateSTKPush = async (phoneNumber, amount) => {
   }
 };
 
+/**
+ * Downloads the payment receipt PDF for a given transaction
+ */
 export const downloadReceipt = async (transactionId) => {
   try {
     const response = await api.get(`/api/mpesa/receipt/${transactionId}/`, {
@@ -37,12 +54,15 @@ export const downloadReceipt = async (transactionId) => {
   }
 };
 
+/**
+ * Fetches all transactions for the currently logged-in user
+ */
 export const getPaymentTransactions = async () => {
   try {
-    const response = await api.get('/api/mpesa/transactions/history/'); 
+    const response = await api.get('/api/mpesa/transactions/history/');
     return {
       success: true,
-      data: response.data.data || response.data // Handle both response formats
+      data: response.data.data || response.data
     };
   } catch (error) {
     console.error('Transaction History Error:', {
@@ -50,9 +70,14 @@ export const getPaymentTransactions = async () => {
       data: error.response?.data,
       config: error.config
     });
-    return {  // Return object instead of throwing
+    return {
       success: false,
       message: error.response?.data?.message || 'Failed to fetch transactions'
     };
   }
 };
+
+/**
+ * Utility to delay execution (used for waiting before fetching transactions)
+ */
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
