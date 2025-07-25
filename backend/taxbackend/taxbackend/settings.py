@@ -128,9 +128,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    
+    # Change from IsAuthenticated to AllowAny for public endpoints
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny', 
+        'rest_framework.permissions.AllowAny',  # Changed from IsAuthenticated
     )
 }
 

@@ -11,10 +11,10 @@ export const login = async (credentials) => {
 };
 
 export const storeTokens = (data) => {
-    localStorage.setItem('access_token', data.access);
+    localStorage.setItem('access', data.access);
     localStorage.setItem('refresh', data.refresh);
 };
 
 export function getToken() {
-  return localStorage.getItem("access_token");
+  return localStorage.getItem("access");
 }

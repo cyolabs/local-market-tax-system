@@ -47,13 +47,4 @@ class UserSerializer(serializers.ModelSerializer):
 class PaymentTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = PaymentTransaction
-        fields = [
-            'id',
-            'phone_number',
-            'amount',
-            'transaction_id',
-            'merchant_request_id',
-            'checkout_request_id',
-            'transaction_date',
-            'status'
-        ]
+        fields = '__all__'
