@@ -274,7 +274,7 @@ def stk_status_view(request):
 
 # -------------------- Transaction History --------------------
 
-@method_decorator(csrf_exempt,name='dispatch')
+@method_decorator(name='dispatch')
 class TransactionHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
