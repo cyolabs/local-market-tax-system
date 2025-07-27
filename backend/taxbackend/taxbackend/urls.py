@@ -14,7 +14,6 @@ def home(request):
             <li><a href="/signup/">/signup/</a> - User registration</li>
             <li><a href="/login/">/login/</a> - User login</li>
             <li><a href="/admin/">Admin Panel</a></li>
-            <li><a href="/api/mpesa/">MPesa Endpoints</a></li>
         </ul>
     """)
 
@@ -24,5 +23,5 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('', include('tax_api.urls')),
-    path('', include('mpesa_express.urls')),
+    path('mpesa', include('mpesa_express.urls')),
 ]
