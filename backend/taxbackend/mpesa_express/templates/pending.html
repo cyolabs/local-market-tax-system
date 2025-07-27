@@ -109,6 +109,17 @@
       justify-content: center;
       margin-top: 2rem;
     }
+
+    .debug-info {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 0.8rem;
+      font-family: monospace;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -125,6 +136,7 @@
       </h5>
       <div class="spinner-border" role="status" id="loading-spinner"></div>
       <p class="mt-2" id="status-message">Waiting for confirmation...</p>
+      <div id="debug-info" class="debug-info"></div>
     </div>
 
     <div class="d-flex">
@@ -153,7 +165,7 @@
   }
 
   let reqcount = 0;
-  const maxAttempts = 60;
+  const maxAttempts = 90; // Increased to 3 minutes (90 * 2 seconds)
   const checkoutRequestID = "{{ checkout_request_id }}";
   const statusContainer = document.getElementById("status-container");
   const loadingSpinner = document.getElementById("loading-spinner");
@@ -161,14 +173,39 @@
   const retryButton = document.getElementById("retry-button");
   const initialMessage = document.getElementById("initial-message");
   const confirmText = document.getElementById("confirm-text");
+  const debugInfo = document.getElementById("debug-info");
+
+  // Enable debug mode by adding ?debug=1 to URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const debugMode = urlParams.get('debug') === '1';
+  if (debugMode) {
+    debugInfo.style.display = 'block';
+  }
+
+  function logDebug(message, data = null) {
+    if (debugMode) {
+      const timestamp = new Date().toLocaleTimeString();
+      let logEntry = `[${timestamp}] ${message}`;
+      if (data) {
+        logEntry += `\nData: ${JSON.stringify(data, null, 2)}`;
+      }
+      debugInfo.innerHTML += logEntry + '\n\n';
+      debugInfo.scrollTop = debugInfo.scrollHeight;
+    }
+    console.log(message, data);
+  }
 
   const confettiEffect = () => {
     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
   };
 
   const stkPushQueryWithIntervals = (checkoutRequestID) => {
+    logDebug(`Starting payment status check for: ${checkoutRequestID}`);
+    
     const timer = setInterval(async () => {
       reqcount += 1;
+      logDebug(`Status check attempt ${reqcount}/${maxAttempts}`);
+      
       try {
         const csrftoken = getCookie('csrftoken');  // Get CSRF token cookie
 
@@ -182,12 +219,22 @@
         });
 
         const data = await response.json();
-        const resultCode = data.status.ResultCode;
-        const resultDesc = data.status.ResultDesc || "Payment failed. Please try again.";
+        logDebug('Response received', data);
 
-        if (data.status.errorCode === "500.001.1001") {
-          console.log("Payment is still processing...");
-        } else if (resultCode === "0") {
+        if (data.error) {
+          logDebug('Error in response', data.error);
+          statusMessage.textContent = `Error: ${data.error}`;
+          return;
+        }
+
+        const status = data.status;
+        const resultCode = status.ResultCode;
+        const resultDesc = status.ResultDesc || status.errorMessage || "Payment status unknown";
+
+        logDebug('Payment status', { resultCode, resultDesc });
+
+        // Handle successful payment
+        if (resultCode === "0" || resultCode === 0) {
           clearInterval(timer);
           loadingSpinner.style.display = "none";
           confirmText.style.display = "none";
@@ -199,7 +246,13 @@
             </div>
           `;
           confettiEffect();
-        } else if (resultCode) {
+          logDebug('Payment completed successfully');
+          return;
+        }
+
+        // Handle failed payment
+        if (resultCode && resultCode !== "0" && resultCode !== 0 && 
+            !status.errorCode && !status.error) {
           clearInterval(timer);
           loadingSpinner.style.display = "none";
           confirmText.style.display = "none";
@@ -210,32 +263,77 @@
             </div>
           `;
           retryButton.style.display = "inline-block";
+          logDebug('Payment failed', { resultCode, resultDesc });
+          return;
         }
+
+        // Handle M-Pesa API errors that indicate processing
+        const processingErrors = [
+          "500.001.1001", // Request timeout
+          "500.001.1002", // Invalid request
+          "1032", // Request cancelled by user
+          "1037", // DS timeout
+          "2001", // Wrong PIN
+          "1", // Balance insufficient
+        ];
+
+        if (status.errorCode) {
+          if (processingErrors.includes(status.errorCode)) {
+            logDebug('Payment still processing', status.errorCode);
+            statusMessage.textContent = "Payment is still processing...";
+          } else {
+            // Unknown error code, continue polling for a bit more
+            logDebug('Unknown error code, continuing to poll', status.errorCode);
+            statusMessage.textContent = `Checking payment status... (${reqcount}/${maxAttempts})`;
+          }
+        } else {
+          // No specific error code, payment might still be processing
+          logDebug('No specific status, continuing to poll');
+          statusMessage.textContent = `Waiting for confirmation... (${reqcount}/${maxAttempts})`;
+        }
+
       } catch (error) {
+        logDebug('Network error', error.toString());
         console.error("Error:", error);
+        statusMessage.textContent = `Network error. Retrying... (${reqcount}/${maxAttempts})`;
       }
 
+      // Check if we've exceeded max attempts
       if (reqcount >= maxAttempts) {
         clearInterval(timer);
         loadingSpinner.style.display = "none";
+        initialMessage.innerHTML = `Payment Status Unknown ⚠️`;
         statusMessage.innerHTML = `
           <div class="alert alert-warning">
-            You took too long to confirm the payment. Please try again.
+            <p>We couldn't confirm your payment status. This might mean:</p>
+            <ul style="text-align: left; margin-top: 10px;">
+              <li>The payment is still processing</li>
+              <li>You took too long to enter your PIN</li>
+              <li>There was a network issue</li>
+            </ul>
+            <p style="margin-top: 15px;"><strong>Please check your M-Pesa messages</strong> to confirm if the payment went through.</p>
           </div>
         `;
         retryButton.style.display = "inline-block";
+        logDebug('Max attempts reached, stopping polling');
       }
-    }, 2000);
+    }, 2000); // Check every 2 seconds
   };
 
   retryButton.addEventListener("click", () => {
+    logDebug('Retry button clicked');
     reqcount = 0;
     retryButton.style.display = "none";
     loadingSpinner.style.display = "inline-block";
+    confirmText.style.display = "block";
+    initialMessage.innerHTML = `
+      M-Pesa STK Push sent successfully. Enter your M-Pesa PIN to complete the transaction.
+    `;
     statusMessage.textContent = "Waiting for confirmation...";
     stkPushQueryWithIntervals(checkoutRequestID);
   });
 
+  // Start the status checking
   stkPushQueryWithIntervals(checkoutRequestID);
 </script>
 
