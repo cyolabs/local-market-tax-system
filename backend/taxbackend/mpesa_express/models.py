@@ -1,12 +1,7 @@
-from django.conf import settings  # to reference AUTH_USER_MODEL
 from django.db import models
 
+# Create your models here.
 class Transaction(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='transactions'
-    )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     checkout_id = models.CharField(max_length=100, unique=True)
     mpesa_code = models.CharField(max_length=100, unique=True)
