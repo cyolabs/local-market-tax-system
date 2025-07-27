@@ -5,10 +5,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseBadRequest
 from .models import Transaction
 from .forms import PaymentForm
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # Retrieve variables from the environment
 CONSUMER_KEY = os.getenv("CONSUMER_KEY")
@@ -17,7 +13,8 @@ MPESA_PASSKEY = os.getenv("MPESA_PASSKEY")
 
 MPESA_SHORTCODE = os.getenv("MPESA_SHORTCODE")
 CALLBACK_URL = os.getenv("CALLBACK_URL")
-MPESA_BASE_URL = os.getenv("MPESA_BASE_URL")
+MPESA_BASE_URL = os.getenv('MPESA_BASE_URL', '').rstrip('/')
+
 
 # Phone number formatting and validation
 def format_phone_number(phone):
@@ -210,3 +207,5 @@ def payment_callback(request):
 
     except (json.JSONDecodeError, KeyError) as e:
         return HttpResponseBadRequest(f"Invalid request data: {str(e)}")
+
+print("MPESA_BASE_URL:", MPESA_BASE_URL)
