@@ -59,7 +59,7 @@ ROOT_URLCONF = 'taxbackend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'taxbackend' / 'mpesa_express' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
