@@ -1,10 +1,12 @@
-from django.urls import path, include
+from django.urls import path,re_path, include
 from django.http import HttpResponse
 from django.contrib import admin
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+
+from django.views.generic import TemplateView
 
 def home(request):
     return HttpResponse("""
@@ -24,4 +26,5 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('', include('tax_api.urls')),
     path('mpesa/', include('mpesa_express.urls')),
+    re_path(r'^.*$', TemplateView.as_view(template_name="index.html")),
 ]

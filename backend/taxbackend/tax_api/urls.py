@@ -1,5 +1,4 @@
-from django.urls import path, re_path
-from django.views.generic import TemplateView
+from django.urls import path
 from .views import (
     RegisterAPI, 
     LoginAPI, 
@@ -16,5 +15,4 @@ urlpatterns = [
     path('admin/dashboard/', AdminDashboardAPI.as_view(), name='admin-dashboard'),
     path('admin/vendors/', RegisteredUsersAPI.as_view(), name='registered-users'),
     path('feedback/', SubmitFeedbackView.as_view(), name='submit-feedback'),
-    re_path(r'^.*$', TemplateView.as_view(template_name="index.html")),
 ]

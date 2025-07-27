@@ -56,10 +56,15 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'taxbackend.urls'
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "frontend", "tax-collection-ui", "build", "static"),
+]
+
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'taxbackend' / 'mpesa_express' / 'templates'],
+        'DIRS': [os.path.join(BASE_DIR, "frontend", "tax-collection-ui", "build")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
