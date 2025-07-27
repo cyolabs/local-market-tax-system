@@ -39,7 +39,7 @@ INSTALLED_APPS = [
 
     # Your apps
     'tax_api',
-    'mpesa',
+    'mpesa_express',
 ]
 
 MIDDLEWARE = [
@@ -156,11 +156,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://local-market-tax-system-7fuw.onrender.com"
 ]
 
-MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY') 
-MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET')
-MPESA_BUSINESS_SHORTCODE = os.getenv('MPESA_BUSINESS_SHORTCODE')
+CONSUMER_KEY = os.getenv('CONSUMER_KEY') 
+CONSUMER_SECRET = os.getenv('CONSUMER_SECRET')
+MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE')
 MPESA_PASSKEY = os.getenv('MPESA_PASSKEY')
-MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL') 
+CALLBACK_URL = os.getenv('CALLBACK_URL') 
 
 MPESA_TOKEN_API_URL = os.getenv('MPESA_TOKEN_API_URL')
 MPESA_STK_PUSH_URL = os.getenv('MPESA_STK_PUSH_URL')

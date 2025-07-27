@@ -14,7 +14,6 @@ import {
   Modal,
   Spinner
 } from "react-bootstrap";
-import PaymentModal from "../components/PaymentModal";
 import {
   initiateSTKPush,
   getPaymentTransactions,
@@ -121,10 +120,15 @@ const VendorDashboard = () => {
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [feedbackSuccess, setFeedbackSuccess] = useState("");
 
-  const handlePayClick = (category) => {
-    setSelectedCategory(category);
-    setShowModal(true);
-  };
+const handlePayClick = (category) => {
+  const url = `/mpesa/payment-form/?category=${encodeURIComponent(category.title)}&amount=${category.amount}`;
+  const popup = window.open(url, '_blank', 'width=500,height=650');
+  if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+    alert('Popup blocked. Please allow popups for this site.');
+  }
+};
+
+
 
  const fetchTransactions = async () => {
   try {
@@ -146,42 +150,6 @@ const VendorDashboard = () => {
     setLoading(false);
   }
 };
-  const handlePaymentSuccess = async (transactionData) => {
-    setShowModal(false);
-    setSuccess(
-      "Payment initiated successfully. Please check your phone to complete the transaction."
-    );
-    // Wait 5 seconds before refreshing to allow backend to process
-    setTimeout(() => {
-      fetchTransactions();
-    }, 5000);
-  };
-
-  const handleViewReceipt = (transaction) => {
-    setSelectedTransaction(transaction);
-    setShowReceipt(true);
-  };
-
-  const handleDownloadReceipt = async (transactionId) => {
-    try {
-      const result = await downloadReceipt(transactionId);
-      if (result.success) {
-        const url = window.URL.createObjectURL(result.blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = result.fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      } else {
-        setError(result.message);
-      }
-    } catch (err) {
-      setError('Failed to download receipt');
-      console.error(err);
-    }
-  };
 
 
 const handleFeedbackSubmit = async (e) => {
@@ -374,14 +342,6 @@ const handleFeedbackSubmit = async (e) => {
 
   return (
     <>
-      <PaymentModal
-        show={showModal}
-        handleClose={() => setShowModal(false)}
-        category={selectedCategory}
-        onPaymentSuccess={handlePaymentSuccess}
-        setPaymentLoading={setPaymentLoading}
-      />
-
       <Receipt 
         transaction={selectedTransaction}
         show={showReceipt}
