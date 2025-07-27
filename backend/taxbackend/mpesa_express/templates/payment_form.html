@@ -1,61 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Make Payment</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Make Payment</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-    <!-- Bootstrap CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"
-    />
-  </head>
-  <body class="d-flex align-items-center justify-content-center vh-100 bg-light">
-    {% load bootstrap5 %}
-    <div class="card shadow-sm p-4" style="width: 100%; max-width: 500px">
-      <h3 class="text-center mb-4">Make Payment</h3>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
 
-      <!-- Display Error Message -->
-      {% if error_message %}
-        <div class="alert alert-danger" role="alert">{{ error_message }}</div>
-      {% endif %}
+    .card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+      padding: 2rem;
+    }
 
-      <!-- Display Success Message -->
-      {% if success_message %}
-        <div class="alert alert-success" role="alert">{{ success_message }}</div>
-      {% endif %}
+    .card h3 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
 
-      <form method="POST" class="needs-validation" novalidate onsubmit="handleFormSubmit(event)">
-        {% csrf_token %}
-        {% for field in form %}
-          <div class="mb-3">{% bootstrap_field field %}</div>
-        {% endfor %}
-        <button
-          type="submit"
-          class="btn btn-success w-100 rounded-pill"
-          id="submitButton"
-        >
-          <span id="spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none"></span>
-          <span id="buttonText">Pay</span>
-        </button>
-      </form>
-    </div>
+    .alert {
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      border-radius: 5px;
+      font-size: 0.95rem;
+    }
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
-      function handleFormSubmit(event) {
-        event.preventDefault();
-        const submitButton = document.getElementById("submitButton");
-        const buttonText = document.getElementById("buttonText");
-        const spinner = document.getElementById("spinner");
+    .alert-danger {
+      background-color: #f8d7da;
+      color: #842029;
+    }
 
-        buttonText.textContent = "Processing...";
-        spinner.style.display = "inline-block";
-        submitButton.disabled = true;
+    .alert-success {
+      background-color: #d1e7dd;
+      color: #0f5132;
+    }
 
-        event.target.submit(); // Submit form
-      }
-    </script>
-  </body>
+    form .form-group {
+      margin-bottom: 1rem;
+    }
+
+    form label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    form input, form select, form textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 50px;
+      background-color: #198754;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .spinner-border {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid #ffffff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      display: inline-block;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  {% load bootstrap5 %}
+  <div class="card">
+    <h3>Make Payment</h3>
+
+    {% if error_message %}
+      <div class="alert alert-danger">{{ error_message }}</div>
+    {% endif %}
+
+    {% if success_message %}
+      <div class="alert alert-success">{{ success_message }}</div>
+    {% endif %}
+
+    <form method="POST" novalidate onsubmit="handleFormSubmit(event)">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+        </div>
+      {% endfor %}
+      <button type="submit" id="submitButton">
+        <span id="spinner" class="spinner-border" style="display: none;"></span>
+        <span id="buttonText">Pay</span>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      const submitButton = document.getElementById("submitButton");
+      const buttonText = document.getElementById("buttonText");
+      const spinner = document.getElementById("spinner");
+
+      buttonText.textContent = "Processing...";
+      spinner.style.display = "inline-block";
+      submitButton.disabled = true;
+
+      event.target.submit();
+    }
+    
+  // When payment is complete (in your success handler)
+  window.opener.postMessage('paymentCompleted', window.location.origin);
+  window.close(); // Optional: close the popup after payment
+  </script>
+</body>
 </html>
