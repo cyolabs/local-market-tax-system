@@ -32,6 +32,8 @@ def format_phone_number(phone):
         raise ValueError("Invalid phone number format")
 
 # Generate M-Pesa access token
+# Replace your generate_access_token function with this fixed version:
+
 def generate_access_token():
     try:
         credentials = f"{CONSUMER_KEY}:{CONSUMER_SECRET}"
@@ -43,19 +45,38 @@ def generate_access_token():
         }
 
         url = f"{MPESA_TOKEN_API_URL}?grant_type=client_credentials"
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()  # Optional but recommended for catching HTTP errors
-        response_json = response.json()
+        
+        print(f"Requesting access token from: {url}")
+        
+        response = requests.get(url, headers=headers, timeout=30)
+        
+        print(f"Token API Response Status: {response.status_code}")
+        print(f"Token API Response Text: {response.text}")
+        
+        # Check HTTP status first
+        if response.status_code != 200:
+            raise Exception(f"M-Pesa token API returned status {response.status_code}: {response.text}")
+        
+        # Try to parse JSON
+        try:
+            response_json = response.json()
+        except requests.exceptions.JSONDecodeError as json_error:
+            raise Exception(f"Invalid JSON response from M-Pesa token API: {response.text}")
 
         if "access_token" in response_json:
+            print("Successfully obtained access token")
             return response_json["access_token"]
         else:
-            raise Exception("Access token missing in response.")
+            raise Exception(f"Access token missing in response: {response_json}")
 
-    except requests.RequestException as e:
-        raise Exception(f"Failed to connect to M-Pesa: {str(e)}")
-
+    except requests.exceptions.RequestException as req_error:
+        raise Exception(f"Failed to connect to M-Pesa token API: {str(req_error)}")
+    except Exception as e:
+        print(f"Error generating access token: {str(e)}")
+        raise Exception(f"Failed to generate access token: {str(e)}")
 # Initiate STK Push and handle response
+# Replace your initiate_stk_push function with this fixed version:
+
 def initiate_stk_push(phone, amount):
     try:
         token = generate_access_token()
@@ -80,19 +101,52 @@ def initiate_stk_push(phone, amount):
             "TransactionDesc": "Payment for goods",
         }
 
+        print(f"Sending STK push request: {request_body}")
+
         response = requests.post(
             f"{MPESA_BASE_URL}/mpesa/stkpush/v1/processrequest",
             json=request_body,
             headers=headers,
-        ).json()
+            timeout=30  # Add timeout
+        )
 
-        return response
+        print(f"STK Push Response Status: {response.status_code}")
+        print(f"STK Push Response Text: {response.text}")
 
+        # Check if response is successful HTTP status
+        if response.status_code != 200:
+            return {
+                "ResponseCode": "1",
+                "errorMessage": f"M-Pesa API returned status {response.status_code}: {response.text}"
+            }
+
+        # Try to parse JSON response
+        try:
+            response_data = response.json()
+            print(f"STK Push Response JSON: {response_data}")
+            return response_data
+        except requests.exceptions.JSONDecodeError as json_error:
+            print(f"Failed to parse M-Pesa response as JSON: {json_error}")
+            return {
+                "ResponseCode": "1",
+                "errorMessage": f"Invalid response from M-Pesa: {response.text[:200]}"
+            }
+
+    except requests.exceptions.RequestException as req_error:
+        print(f"Network error in STK Push: {req_error}")
+        return {
+            "ResponseCode": "1",
+            "errorMessage": f"Network error: {str(req_error)}"
+        }
     except Exception as e:
-        print(f"Failed to initiate STK Push: {str(e)}")
-        return e
-
+        print(f"Unexpected error in STK Push: {str(e)}")
+        return {
+            "ResponseCode": "1",
+            "errorMessage": f"An unexpected error occurred: {str(e)}"
+        }
 # Payment View
+# Replace your payment_view function with this fixed version:
+
 def payment_view(request):
     if request.method == "POST":
         form = PaymentForm(request.POST)
@@ -100,20 +154,46 @@ def payment_view(request):
             try:
                 phone = format_phone_number(form.cleaned_data["phone_number"])
                 amount = form.cleaned_data["amount"]
+                
+                print(f"Processing payment: Phone={phone}, Amount={amount}")
+                
                 response = initiate_stk_push(phone, amount)
-                print(response)
+                
+                print(f"STK Push Response in view: {response}")
 
-                if response.get("ResponseCode") == "0":
-                    checkout_request_id = response["CheckoutRequestID"]
-                    return render(request, "pending.html", {"checkout_request_id": checkout_request_id})
+                # Check if response is a dict (successful API call) or an exception
+                if isinstance(response, dict):
+                    if response.get("ResponseCode") == "0":
+                        checkout_request_id = response.get("CheckoutRequestID")
+                        if checkout_request_id:
+                            return render(request, "pending.html", {
+                                "checkout_request_id": checkout_request_id
+                            })
+                        else:
+                            error_message = "M-Pesa response missing CheckoutRequestID"
+                    else:
+                        error_message = response.get("errorMessage") or response.get("CustomerMessage") or "Failed to send STK push. Please try again."
                 else:
-                    error_message = response.get("errorMessage", "Failed to send STK push. Please try again.")
-                    return render(request, "payment_form.html", {"form": form, "error_message": error_message})
+                    # If response is not a dict, it's likely an exception object
+                    error_message = f"Failed to communicate with M-Pesa: {str(response)}"
+
+                return render(request, "payment_form.html", {
+                    "form": form, 
+                    "error_message": error_message
+                })
 
             except ValueError as e:
-                return render(request, "payment_form.html", {"form": form, "error_message": str(e)})
+                print(f"Phone number validation error: {e}")
+                return render(request, "payment_form.html", {
+                    "form": form, 
+                    "error_message": str(e)
+                })
             except Exception as e:
-                return render(request, "payment_form.html", {"form": form, "error_message": f"An unexpected error occurred: {str(e)}"})
+                print(f"Unexpected error in payment_view: {e}")
+                return render(request, "payment_form.html", {
+                    "form": form, 
+                    "error_message": f"An unexpected error occurred: {str(e)}"
+                })
 
     else:
         # Pre-fill form using GET parameters
@@ -124,7 +204,6 @@ def payment_view(request):
         form = PaymentForm(initial=initial_data)
 
     return render(request, "payment_form.html", {"form": form})
-
 # Query STK Push status
 def query_stk_push(checkout_request_id):
     print("Querying...")
