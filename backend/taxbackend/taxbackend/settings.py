@@ -5,11 +5,10 @@ import os
 import dj_database_url
 from dotenv import load_dotenv
 
+load_dotenv() 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 #Static files
 STATIC_URL = '/static/'
@@ -82,9 +81,10 @@ WSGI_APPLICATION = 'taxbackend.wsgi.application'
 
 # Database
 if os.getenv('RENDER', False):
-    DATABASES = {
-        'default': dj_database_url.config(default=os.getenv('DATABASE_URL'), conn_max_age=600, ssl_require=True)
-    }
+ DATABASES = {
+    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'),conn_max_age=600,
+        ssl_require=True )
+ }
 else:
     DATABASES = {
         'default': {
@@ -96,6 +96,7 @@ else:
             'PORT': '5432',
         }
     }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -168,4 +169,4 @@ MPESA_TOKEN_API_URL = os.getenv('MPESA_TOKEN_API_URL')
 MPESA_STK_PUSH_URL = os.getenv('MPESA_STK_PUSH_URL')
 MPESA_REGISTER_URL = os.getenv('MPESA_REGISTER_URL')
 MPESA_SIMULATE_URL = os.getenv('MPESA_SIMULATE_URL')
-MPESA_BASE_URL = os.getenv('MPESA_BASE_URL', '').rstrip('/')
+MPESA_BASE_URL = os.getenv('MPESA_BASE_URL')
