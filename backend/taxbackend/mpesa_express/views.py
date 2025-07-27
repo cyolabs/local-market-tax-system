@@ -157,6 +157,7 @@ def query_stk_push(checkout_request_id):
         return {"error": str(e)}
 
 # Improved view to query the STK status and return it to the frontend
+@csrf_exempt
 def stk_status_view(request):
     if request.method == 'POST':
         try:
