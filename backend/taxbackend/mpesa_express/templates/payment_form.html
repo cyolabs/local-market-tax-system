@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Make Payment</title>
   <style>
     * {
@@ -61,7 +61,9 @@
       font-weight: 500;
     }
 
-    form input, form select, form textarea {
+    form input,
+    form select,
+    form textarea {
       width: 100%;
       padding: 0.5rem 0.75rem;
       border: 1px solid #ced4da;
@@ -100,12 +102,13 @@
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
 <body>
-  {% load bootstrap5 %}
   <div class="card">
     <h3>Make Payment</h3>
 
@@ -123,6 +126,11 @@
         <div class="form-group">
           <label for="{{ field.id_for_label }}">{{ field.label }}</label>
           {{ field }}
+          {% if field.errors %}
+            <div class="alert alert-danger" style="margin-top: 0.25rem;">
+              {{ field.errors|striptags }}
+            </div>
+          {% endif %}
         </div>
       {% endfor %}
       <button type="submit" id="submitButton">
@@ -145,10 +153,12 @@
 
       event.target.submit();
     }
-    
-  // When payment is complete (in your success handler)
-  window.opener.postMessage('paymentCompleted', window.location.origin);
-  window.close(); // Optional: close the popup after payment
+
+    // Uncomment and customize these lines in your success handler if popup communication is needed:
+    /*
+    window.opener.postMessage('paymentCompleted', window.location.origin);
+    window.close();
+    */
   </script>
 </body>
 </html>
