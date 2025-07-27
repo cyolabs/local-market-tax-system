@@ -6,7 +6,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from .models import Transaction
 from .forms import PaymentForm
 from dotenv import load_dotenv
-
+from django.contrib.auth.decorators import login_required
 # Load environment variables
 load_dotenv()
 
@@ -147,6 +147,7 @@ def initiate_stk_push(phone, amount):
 # Payment View
 # Replace your payment_view function with this fixed version:
 
+@login_required
 def payment_view(request):
     if request.method == "POST":
         form = PaymentForm(request.POST)
@@ -154,55 +155,43 @@ def payment_view(request):
             try:
                 phone = format_phone_number(form.cleaned_data["phone_number"])
                 amount = form.cleaned_data["amount"]
-                
-                print(f"Processing payment: Phone={phone}, Amount={amount}")
-                
+
                 response = initiate_stk_push(phone, amount)
-                
-                print(f"STK Push Response in view: {response}")
-
-                # Check if response is a dict (successful API call) or an exception
-                if isinstance(response, dict):
-                    if response.get("ResponseCode") == "0":
-                        checkout_request_id = response.get("CheckoutRequestID")
-                        if checkout_request_id:
-                            return render(request, "pending.html", {
-                                "checkout_request_id": checkout_request_id
-                            })
-                        else:
-                            error_message = "M-Pesa response missing CheckoutRequestID"
-                    else:
-                        error_message = response.get("errorMessage") or response.get("CustomerMessage") or "Failed to send STK push. Please try again."
+                if isinstance(response, dict) and response.get("ResponseCode") == "0":
+                    checkout_request_id = response.get("CheckoutRequestID")
+                    # Optionally save a pending transaction linked to the user here:
+                    # Transaction.objects.create(
+                    #     user=request.user,
+                    #     amount=amount,
+                    #     checkout_id=checkout_request_id,
+                    #     phone_number=phone,
+                    #     status="Pending"
+                    # )
+                    return render(request, "pending.html", {"checkout_request_id": checkout_request_id})
                 else:
-                    # If response is not a dict, it's likely an exception object
-                    error_message = f"Failed to communicate with M-Pesa: {str(response)}"
-
-                return render(request, "payment_form.html", {
-                    "form": form, 
-                    "error_message": error_message
-                })
+                    error_message = response.get("errorMessage", "Failed to send STK push. Please try again.")
+                    return render(request, "payment_form.html", {"form": form, "error_message": error_message})
 
             except ValueError as e:
-                print(f"Phone number validation error: {e}")
-                return render(request, "payment_form.html", {
-                    "form": form, 
-                    "error_message": str(e)
-                })
+                return render(request, "payment_form.html", {"form": form, "error_message": str(e)})
             except Exception as e:
-                print(f"Unexpected error in payment_view: {e}")
-                return render(request, "payment_form.html", {
-                    "form": form, 
-                    "error_message": f"An unexpected error occurred: {str(e)}"
-                })
-
+                return render(request, "payment_form.html", {"form": form, "error_message": f"An unexpected error occurred: {str(e)}"})
     else:
-        # Pre-fill form using GET parameters
         initial_data = {
             "account_reference": request.GET.get("category", ""),
-            "amount": request.GET.get("amount", "")
+            "amount": request.GET.get("amount", ""),
         }
         form = PaymentForm(initial=initial_data)
-
+    if isinstance(response, dict) and response.get("ResponseCode") == "0":
+        checkout_request_id = response.get("CheckoutRequestID")
+        if checkout_request_id:
+            Transaction.objects.create(
+                user=request.user,
+                amount=amount,
+                checkout_id=checkout_request_id,
+                phone_number=phone,
+                status="Pending"
+            )
     return render(request, "payment_form.html", {"form": form})
 # Query STK Push status
 def query_stk_push(checkout_request_id):
@@ -295,61 +284,55 @@ def stk_status_view(request):
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-@csrf_exempt  # To allow POST requests from external sources like M-Pesa
+@csrf_exempt
 def payment_callback(request):
     if request.method != "POST":
         return HttpResponseBadRequest("Only POST requests are allowed")
 
     try:
-        callback_data = json.loads(request.body)  # Parse the request body
-        print("M-Pesa Callback Data:", callback_data)  # Debug log
-        
+        callback_data = json.loads(request.body)
         result_code = callback_data["Body"]["stkCallback"]["ResultCode"]
+        checkout_id = callback_data["Body"]["stkCallback"]["CheckoutRequestID"]
 
+        transaction = Transaction.objects.filter(checkout_id=checkout_id).first()
         if result_code == 0:
-            # Successful transaction
-            checkout_id = callback_data["Body"]["stkCallback"]["CheckoutRequestID"]
             metadata = callback_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"]
 
             amount = next(item["Value"] for item in metadata if item["Name"] == "Amount")
             mpesa_code = next(item["Value"] for item in metadata if item["Name"] == "MpesaReceiptNumber")
             phone = next(item["Value"] for item in metadata if item["Name"] == "PhoneNumber")
 
-            # Save transaction to the database
-            transaction, created = Transaction.objects.get_or_create(
-                checkout_id=checkout_id,
-                defaults={
-                    'amount': amount,
-                    'mpesa_code': mpesa_code,
-                    'phone_number': phone,
-                    'status': "Success"
-                }
-            )
-            
-            if created:
-                print(f"Transaction saved: {transaction}")
+            if transaction:
+                transaction.amount = amount
+                transaction.mpesa_code = mpesa_code
+                transaction.phone_number = phone
+                transaction.status = "Success"
+                transaction.save()
             else:
-                print(f"Transaction already exists: {transaction}")
-                
+                # If transaction does not exist, create it without a user (or handle differently)
+                Transaction.objects.create(
+                    checkout_id=checkout_id,
+                    amount=amount,
+                    mpesa_code=mpesa_code,
+                    phone_number=phone,
+                    status="Success"
+                )
             return JsonResponse({"ResultCode": 0, "ResultDesc": "Payment successful"})
-        else:
-            # Payment failed - also save to database for tracking
-            checkout_id = callback_data["Body"]["stkCallback"]["CheckoutRequestID"]
-            result_desc = callback_data["Body"]["stkCallback"].get("ResultDesc", "Payment failed")
-            
-            Transaction.objects.get_or_create(
-                checkout_id=checkout_id,
-                defaults={
-                    'amount': 0,
-                    'mpesa_code': '',
-                    'phone_number': '',
-                    'status': "Failed"
-                }
-            )
 
-        # Payment failed
-        return JsonResponse({"ResultCode": result_code, "ResultDesc": "Payment failed"})
+        else:
+            # Failed payment
+            if transaction:
+                transaction.status = "Failed"
+                transaction.save()
+            else:
+                Transaction.objects.create(
+                    checkout_id=checkout_id,
+                    amount=0,
+                    mpesa_code='',
+                    phone_number='',
+                    status="Failed"
+                )
+            return JsonResponse({"ResultCode": result_code, "ResultDesc": "Payment failed"})
 
     except (json.JSONDecodeError, KeyError) as e:
-        print(f"Callback error: {str(e)}")
         return HttpResponseBadRequest(f"Invalid request data: {str(e)}")
