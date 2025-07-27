@@ -4,7 +4,6 @@ certifi==2024.8.30
 charset-normalizer==3.4.0
 cryptography==42.0.4
 Django==5.2.1
-django-bootstrap-v5==1.0.11
 django-cors-headers==4.7.0
 django-mpesa==2.0.14
 djangorestframework==3.16.0
