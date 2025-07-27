@@ -82,10 +82,9 @@ WSGI_APPLICATION = 'taxbackend.wsgi.application'
 
 # Database
 if os.getenv('RENDER', False):
- DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'),conn_max_age=600,
-        ssl_require=True )
- }
+    DATABASES = {
+        'default': dj_database_url.config(default=os.getenv('DATABASE_URL'), conn_max_age=600, ssl_require=True)
+    }
 else:
     DATABASES = {
         'default': {
@@ -97,7 +96,6 @@ else:
             'PORT': '5432',
         }
     }
-
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -121,8 +119,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
