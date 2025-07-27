@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Payment Confirmation</title>
+  {% csrf_token %}
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <style>
     * {
       box-sizing: border-box;
@@ -119,6 +121,8 @@
       font-size: 0.8rem;
       font-family: monospace;
       display: none;
+      max-height: 200px;
+      overflow-y: auto;
     }
   </style>
 </head>
@@ -165,7 +169,7 @@
   }
 
   let reqcount = 0;
-  const maxAttempts = 90; // Increased to 3 minutes (90 * 2 seconds)
+  const maxAttempts = 90; // 3 minutes (90 * 2 seconds)
   const checkoutRequestID = "{{ checkout_request_id }}";
   const statusContainer = document.getElementById("status-container");
   const loadingSpinner = document.getElementById("loading-spinner");
@@ -207,23 +211,54 @@
       logDebug(`Status check attempt ${reqcount}/${maxAttempts}`);
       
       try {
-        const csrftoken = getCookie('csrftoken');  // Get CSRF token cookie
+        // Get CSRF token from multiple sources
+        let csrftoken = getCookie('csrftoken');
+        if (!csrftoken) {
+          const metaTag = document.querySelector('[name=csrf-token]');
+          if (metaTag) {
+            csrftoken = metaTag.getAttribute('content');
+          }
+        }
 
-        const response = await fetch("/stk-status/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrftoken,
-          },
-          body: JSON.stringify({ checkout_request_id: checkoutRequestID }),
+        logDebug('CSRF Token', csrftoken);
+
+        const headers = {
+          "Content-Type": "application/json",
+        };
+
+        if (csrftoken) {
+          headers["X-CSRFToken"] = csrftoken;
+        }
+
+        const requestBody = { checkout_request_id: checkoutRequestID };
+        
+        logDebug('Making request to /mpesa/stk-status/', {
+          headers: headers,
+          body: requestBody
         });
 
+        const response = await fetch("/mpesa/stk-status/", {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify(requestBody),
+        });
+
+        logDebug('Response received', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
-        logDebug('Response received', data);
+        logDebug('Response data', data);
 
         if (data.error) {
           logDebug('Error in response', data.error);
-          statusMessage.textContent = `Error: ${data.error}`;
+          statusMessage.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
           return;
         }
 
@@ -231,7 +266,7 @@
         const resultCode = status.ResultCode;
         const resultDesc = status.ResultDesc || status.errorMessage || "Payment status unknown";
 
-        logDebug('Payment status', { resultCode, resultDesc });
+        logDebug('Payment status', { resultCode, resultDesc, fullStatus: status });
 
         // Handle successful payment
         if (resultCode === "0" || resultCode === 0) {
@@ -242,7 +277,7 @@
           statusMessage.innerHTML = `
             <div class="text-success">
               <p class="mt-2">Thank you for completing your payment!</p>
-              <a href="{% url 'payment' %}" class="btn btn-success">Ok</a>
+              <a href="/mpesa/" class="btn btn-success">Ok</a>
             </div>
           `;
           confettiEffect();
@@ -250,9 +285,9 @@
           return;
         }
 
-        // Handle failed payment
+        // Handle definitive payment failures
         if (resultCode && resultCode !== "0" && resultCode !== 0 && 
-            !status.errorCode && !status.error) {
+            resultCode !== "500.001.1001" && !status.errorCode) {
           clearInterval(timer);
           loadingSpinner.style.display = "none";
           confirmText.style.display = "none";
@@ -267,35 +302,32 @@
           return;
         }
 
-        // Handle M-Pesa API errors that indicate processing
-        const processingErrors = [
-          "500.001.1001", // Request timeout
-          "500.001.1002", // Invalid request
-          "1032", // Request cancelled by user
-          "1037", // DS timeout
-          "2001", // Wrong PIN
-          "1", // Balance insufficient
-        ];
-
-        if (status.errorCode) {
-          if (processingErrors.includes(status.errorCode)) {
-            logDebug('Payment still processing', status.errorCode);
-            statusMessage.textContent = "Payment is still processing...";
-          } else {
-            // Unknown error code, continue polling for a bit more
-            logDebug('Unknown error code, continuing to poll', status.errorCode);
-            statusMessage.textContent = `Checking payment status... (${reqcount}/${maxAttempts})`;
-          }
+        // Handle processing states
+        if (status.errorCode === "500.001.1001" || 
+            (resultCode && (resultCode === "500.001.1001" || resultCode === 500001001))) {
+          logDebug('Payment still processing (timeout error)');
+          statusMessage.textContent = `Payment is still processing... (${reqcount}/${maxAttempts})`;
+        } else if (status.errorCode) {
+          logDebug('M-Pesa API error', status.errorCode);
+          statusMessage.textContent = `Checking payment status... (${reqcount}/${maxAttempts})`;
         } else {
-          // No specific error code, payment might still be processing
-          logDebug('No specific status, continuing to poll');
+          // No specific status, continue polling
           statusMessage.textContent = `Waiting for confirmation... (${reqcount}/${maxAttempts})`;
         }
 
       } catch (error) {
-        logDebug('Network error', error.toString());
+        logDebug('Network/Request error', {
+          name: error.name,
+          message: error.message
+        });
+        
         console.error("Error:", error);
-        statusMessage.textContent = `Network error. Retrying... (${reqcount}/${maxAttempts})`;
+        statusMessage.innerHTML = `
+          <div class="text-warning">
+            ${error.message.includes('404') ? 'Endpoint not found' : 'Network error'}: ${error.message}<br>
+            <small>Retrying... (${reqcount}/${maxAttempts})</small>
+          </div>
+        `;
       }
 
       // Check if we've exceeded max attempts
