@@ -5,11 +5,10 @@ import os
 import dj_database_url
 from dotenv import load_dotenv
 
+load_dotenv() 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 #Static files
 STATIC_URL = '/static/'
@@ -57,15 +56,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'taxbackend.urls'
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "frontend", "tax-collection-ui", "build", "static"),
-]
-
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, "frontend", "tax-collection-ui", "build")],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -121,6 +115,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = 'static/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
