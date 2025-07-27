@@ -18,7 +18,7 @@ MPESA_TOKEN_API_URL = os.getenv('MPESA_TOKEN_API_URL')
 MPESA_STK_PUSH_URL = os.getenv('MPESA_STK_PUSH_URL')
 MPESA_REGISTER_URL = os.getenv('MPESA_REGISTER_URL')
 
-ix
+
 # Phone number formatting and validation
 def format_phone_number(phone):
     phone = phone.replace("+", "")
