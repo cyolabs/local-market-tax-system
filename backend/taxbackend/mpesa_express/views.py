@@ -18,6 +18,7 @@ CONSUMER_SECRET = "vevcPj3FZnAmOHcMkH9MLEMX7nhAJBBeeUnWam6ptWOfBGXvlfilAW8iNVs9o
 MPESA_SHORTCODE = "174379"
 MPESA_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
 CALLBACK_URL = "https://local-market-tax-system-7fuw.onrender.com/mpesa/callback/"
+MPESA_TOKEN_API_URL="https://sandbox.safaricom.co.ke/oauth/v1/generate"
 
 
 # Phone number formatting and validation
@@ -40,13 +41,14 @@ def generate_access_token():
             "Authorization": f"Basic {encoded_credentials}",
             "Content-Type": "application/json",
         }
-        response = requests.get(
-            f"{MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials",
-            headers=headers,
-        ).json()
 
-        if "access_token" in response:
-            return response["access_token"]
+        url = f"{MPESA_TOKEN_API_URL}?grant_type=client_credentials"
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Optional but recommended for catching HTTP errors
+        response_json = response.json()
+
+        if "access_token" in response_json:
+            return response_json["access_token"]
         else:
             raise Exception("Access token missing in response.")
 
