@@ -5,18 +5,19 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseBadRequest
 from .models import Transaction
 from .forms import PaymentForm
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Retrieve variables from the environment
-CONSUMER_KEY = os.getenv("CONSUMER_KEY")
-CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
-MPESA_PASSKEY = os.getenv("MPESA_PASSKEY")
-
-MPESA_SHORTCODE = os.getenv("MPESA_SHORTCODE")
-CALLBACK_URL = os.getenv("CALLBACK_URL")
-MPESA_BASE_URL = os.getenv('MPESA_BASE_URL')
-MPESA_TOKEN_API_URL = os.getenv('MPESA_TOKEN_API_URL')
-MPESA_STK_PUSH_URL = os.getenv('MPESA_STK_PUSH_URL')
-MPESA_REGISTER_URL = os.getenv('MPESA_REGISTER_URL')
+# Hardcoded M-Pesa configuration constants
+MPESA_BASE_URL = "https://sandbox.safaricom.co.ke"
+CONSUMER_KEY = "hHoazCnAmgQjICzpji6Ut3S0mi0C1qKFEl9I1gU0JV0F0UZf"
+CONSUMER_SECRET = "vevcPj3FZnAmOHcMkH9MLEMX7nhAJBBeeUnWam6ptWOfBGXvlfilAW8iNVs9oFYi"
+MPESA_SHORTCODE = "174379"
+MPESA_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+CALLBACK_URL = "https://local-market-tax-system-7fuw.onrender.com/mpesa/callback/"
 
 
 # Phone number formatting and validation
@@ -30,7 +31,6 @@ def format_phone_number(phone):
         raise ValueError("Invalid phone number format")
 
 # Generate M-Pesa access token
-
 def generate_access_token():
     try:
         credentials = f"{CONSUMER_KEY}:{CONSUMER_SECRET}"
@@ -40,32 +40,24 @@ def generate_access_token():
             "Authorization": f"Basic {encoded_credentials}",
             "Content-Type": "application/json",
         }
-        
         response = requests.get(
-            f"{MPESA_TOKEN_API_URL}?grant_type=client_credentials",
+            f"{MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials",
             headers=headers,
-            timeout=30
-        )
-        response.raise_for_status()
-        data = response.json()
-        
-        if "access_token" in data:
-            return data["access_token"]
-        raise Exception("Access token missing in response")
+        ).json()
+
+        if "access_token" in response:
+            return response["access_token"]
+        else:
+            raise Exception("Access token missing in response.")
 
     except requests.RequestException as e:
-        raise Exception(f"Failed to connect to M-Pesa token API: {str(e)}")
-    except Exception as e:
-        raise Exception(f"Unexpected error generating token: {str(e)}")
-    
+        raise Exception(f"Failed to connect to M-Pesa: {str(e)}")
+
 # Initiate STK Push and handle response
-def initiate_stk_push(phone, amount, account_reference="MarketPayment"):
+def initiate_stk_push(phone, amount):
     try:
         token = generate_access_token()
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         stk_password = base64.b64encode(
@@ -82,23 +74,22 @@ def initiate_stk_push(phone, amount, account_reference="MarketPayment"):
             "PartyB": MPESA_SHORTCODE,
             "PhoneNumber": phone,
             "CallBackURL": CALLBACK_URL,
-            "AccountReference": account_reference,
-            "TransactionDesc": "Local Market Payment",
+            "AccountReference": "account",
+            "TransactionDesc": "Payment for goods",
         }
 
         response = requests.post(
-            MPESA_STK_PUSH_URL,
+            f"{MPESA_BASE_URL}/mpesa/stkpush/v1/processrequest",
             json=request_body,
             headers=headers,
-            timeout=30
-        )
-        response.raise_for_status()
-        return response.json()
+        ).json()
 
-    except requests.RequestException as e:
-        raise Exception(f"STK Push request failed: {str(e)}")
+        return response
+
     except Exception as e:
-        raise Exception(f"Unexpected error in STK Push: {str(e)}")
+        print(f"Failed to initiate STK Push: {str(e)}")
+        return e
+
 # Payment View
 def payment_view(request):
     if request.method == "POST":
@@ -107,43 +98,31 @@ def payment_view(request):
             try:
                 phone = format_phone_number(form.cleaned_data["phone_number"])
                 amount = form.cleaned_data["amount"]
-                category = form.cleaned_data.get("account_reference", "MarketPayment")
-                
-                response = initiate_stk_push(phone, amount, category)
-                print("M-Pesa Response:", response)
+                response = initiate_stk_push(phone, amount)
+                print(response)
 
                 if response.get("ResponseCode") == "0":
-                    return render(request, "pending.html", {
-                        "checkout_request_id": response["CheckoutRequestID"],
-                        "amount": amount,
-                        "phone": phone,
-                        "category": category
-                    })
+                    checkout_request_id = response["CheckoutRequestID"]
+                    return render(request, "pending.html", {"checkout_request_id": checkout_request_id})
                 else:
-                    error_message = response.get("errorMessage", "Payment initiation failed")
-                    return render(request, "payment_form.html", {
-                        "form": form,
-                        "error_message": error_message
-                    })
+                    error_message = response.get("errorMessage", "Failed to send STK push. Please try again.")
+                    return render(request, "payment_form.html", {"form": form, "error_message": error_message})
 
             except ValueError as e:
-                return render(request, "payment_form.html", {
-                    "form": form,
-                    "error_message": f"Invalid input: {str(e)}"
-                })
+                return render(request, "payment_form.html", {"form": form, "error_message": str(e)})
             except Exception as e:
-                return render(request, "payment_form.html", {
-                    "form": form,
-                    "error_message": f"Payment failed: {str(e)}"
-                })
+                return render(request, "payment_form.html", {"form": form, "error_message": f"An unexpected error occurred: {str(e)}"})
 
     else:
-        form = PaymentForm(initial={
-            "account_reference": request.GET.get("category", "MarketPayment"),
+        # Pre-fill form using GET parameters
+        initial_data = {
+            "account_reference": request.GET.get("category", ""),
             "amount": request.GET.get("amount", "")
-        })
+        }
+        form = PaymentForm(initial=initial_data)
 
     return render(request, "payment_form.html", {"form": form})
+
 # Query STK Push status
 def query_stk_push(checkout_request_id):
     print("Quering...")
