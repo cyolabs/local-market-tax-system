@@ -121,9 +121,12 @@ const VendorDashboard = () => {
   const [feedbackSuccess, setFeedbackSuccess] = useState("");
 
 const handlePayClick = (category) => {
-  window.location.href = `https://local-market-tax-system-7fuw.onrender.com/mpesa/?category=${encodeURIComponent(category.title)}&amount=${category.amount}`;
+  const url = `https://local-market-tax-system-7fuw.onrender.com/mpesa/?category=${encodeURIComponent(category.title)}&amount=${category.amount}`;
+  const popup = window.open(url, '_blank', 'width=500,height=650');
+  if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+    alert('Popup blocked. Please allow popups for this site.');
+  }
 };
-
 
 
 

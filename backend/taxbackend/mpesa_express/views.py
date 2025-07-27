@@ -100,6 +100,11 @@ def payment_view(request):
                 response = initiate_stk_push(phone, amount)
                 print(response)
 
+                if isinstance(response, Exception):
+                    # Exception returned, show error
+                    error_message = str(response) or "Failed to send STK push due to an unexpected error."
+                    return render(request, "payment_form.html", {"form": form, "error_message": error_message})
+
                 if response.get("ResponseCode") == "0":
                     checkout_request_id = response["CheckoutRequestID"]
                     return render(request, "pending.html", {"checkout_request_id": checkout_request_id})
