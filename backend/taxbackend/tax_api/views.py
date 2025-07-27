@@ -14,7 +14,6 @@ from django.shortcuts import get_object_or_404
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
-from .models import PaymentTransaction
 from .serializers import FeedbackSerializer
 
 from .models import User

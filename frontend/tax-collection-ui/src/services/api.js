@@ -25,7 +25,7 @@ axios.defaults.withCredentials = true;
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL ||  'https://local-market-tax-system-7fuw.onrender.com',
+  baseURL: process.env.REACT_APP_API_URL || 'https://local-market-tax-system-7fuw.onrender.com/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
