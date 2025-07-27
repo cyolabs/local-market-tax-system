@@ -152,6 +152,7 @@ CORS_ALLOWED_ORIGINS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:8000",
     "https://local-market-tax-system-frontend.onrender.com",
     "https://local-market-tax-system-7fuw.onrender.com"
 ]

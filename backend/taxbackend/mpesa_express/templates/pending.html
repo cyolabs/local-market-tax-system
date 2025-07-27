@@ -134,92 +134,110 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-  <script>
-    let reqcount = 0;
-    const maxAttempts = 60;
-    const checkoutRequestID = "{{ checkout_request_id }}";
-    const statusContainer = document.getElementById("status-container");
-    const loadingSpinner = document.getElementById("loading-spinner");
-    const statusMessage = document.getElementById("status-message");
-    const retryButton = document.getElementById("retry-button");
-    const initialMessage = document.getElementById("initial-message");
-    const confirmText = document.getElementById("confirm-text");
-
-    const confettiEffect = () => {
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    };
-
-    const stkPushQueryWithIntervals = (checkoutRequestID) => {
-      const timer = setInterval(async () => {
-        reqcount += 1;
-
-        try {
-          const response = await fetch("/stk-status/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": "{{ csrf_token }}",
-            },
-            body: JSON.stringify({ checkout_request_id: checkoutRequestID }),
-          });
-
-          const data = await response.json();
-          const resultCode = data.status.ResultCode;
-          const resultDesc = data.status.ResultDesc || "Payment failed. Please try again.";
-
-          if (data.status.errorCode === "500.001.1001") {
-            console.log("Payment is still processing...");
-          } else if (resultCode === "0") {
-            clearInterval(timer);
-            loadingSpinner.style.display = "none";
-            confirmText.style.display = "none";
-            initialMessage.innerHTML = `Payment successful ✅`;
-            statusMessage.innerHTML = `
-              <div class="text-success">
-                <p class="mt-2">Thank you for completing your payment!</p>
-                <a href="{% url 'payment' %}" class="btn btn-success">Ok</a>
-              </div>
-            `;
-            confettiEffect();
-          } else if (resultCode) {
-            clearInterval(timer);
-            loadingSpinner.style.display = "none";
-            confirmText.style.display = "none";
-            initialMessage.innerHTML = `Payment failed ❌`;
-            statusMessage.innerHTML = `
-              <div class="text-danger">
-                <p class="mt-2">${resultDesc}</p>
-              </div>
-            `;
-            retryButton.style.display = "inline-block";
-          }
-        } catch (error) {
-          console.error("Error:", error);
+ <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+  // Helper function to fetch a cookie value by name
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
+      }
+    }
+    return cookieValue;
+  }
 
-        if (reqcount >= maxAttempts) {
+  let reqcount = 0;
+  const maxAttempts = 60;
+  const checkoutRequestID = "{{ checkout_request_id }}";
+  const statusContainer = document.getElementById("status-container");
+  const loadingSpinner = document.getElementById("loading-spinner");
+  const statusMessage = document.getElementById("status-message");
+  const retryButton = document.getElementById("retry-button");
+  const initialMessage = document.getElementById("initial-message");
+  const confirmText = document.getElementById("confirm-text");
+
+  const confettiEffect = () => {
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+  };
+
+  const stkPushQueryWithIntervals = (checkoutRequestID) => {
+    const timer = setInterval(async () => {
+      reqcount += 1;
+      try {
+        const csrftoken = getCookie('csrftoken');  // Get CSRF token cookie
+
+        const response = await fetch("/stk-status/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken,
+          },
+          body: JSON.stringify({ checkout_request_id: checkoutRequestID }),
+        });
+
+        const data = await response.json();
+        const resultCode = data.status.ResultCode;
+        const resultDesc = data.status.ResultDesc || "Payment failed. Please try again.";
+
+        if (data.status.errorCode === "500.001.1001") {
+          console.log("Payment is still processing...");
+        } else if (resultCode === "0") {
           clearInterval(timer);
           loadingSpinner.style.display = "none";
+          confirmText.style.display = "none";
+          initialMessage.innerHTML = `Payment successful ✅`;
           statusMessage.innerHTML = `
-            <div class="alert alert-warning">
-              You took too long to confirm the payment. Please try again.
+            <div class="text-success">
+              <p class="mt-2">Thank you for completing your payment!</p>
+              <a href="{% url 'payment' %}" class="btn btn-success">Ok</a>
+            </div>
+          `;
+          confettiEffect();
+        } else if (resultCode) {
+          clearInterval(timer);
+          loadingSpinner.style.display = "none";
+          confirmText.style.display = "none";
+          initialMessage.innerHTML = `Payment failed ❌`;
+          statusMessage.innerHTML = `
+            <div class="text-danger">
+              <p class="mt-2">${resultDesc}</p>
             </div>
           `;
           retryButton.style.display = "inline-block";
         }
-      }, 2000);
-    };
+      } catch (error) {
+        console.error("Error:", error);
+      }
 
-    retryButton.addEventListener("click", () => {
-      reqcount = 0;
-      retryButton.style.display = "none";
-      loadingSpinner.style.display = "inline-block";
-      statusMessage.textContent = "Waiting for confirmation...";
-      stkPushQueryWithIntervals(checkoutRequestID);
-    });
+      if (reqcount >= maxAttempts) {
+        clearInterval(timer);
+        loadingSpinner.style.display = "none";
+        statusMessage.innerHTML = `
+          <div class="alert alert-warning">
+            You took too long to confirm the payment. Please try again.
+          </div>
+        `;
+        retryButton.style.display = "inline-block";
+      }
+    }, 2000);
+  };
 
+  retryButton.addEventListener("click", () => {
+    reqcount = 0;
+    retryButton.style.display = "none";
+    loadingSpinner.style.display = "inline-block";
+    statusMessage.textContent = "Waiting for confirmation...";
     stkPushQueryWithIntervals(checkoutRequestID);
-  </script>
+  });
+
+  stkPushQueryWithIntervals(checkoutRequestID);
+</script>
+
 </body>
 </html>
