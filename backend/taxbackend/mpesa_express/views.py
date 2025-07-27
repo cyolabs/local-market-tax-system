@@ -1,5 +1,5 @@
 import requests, base64, json, re, os
-from datetime import datetime
+from datetime import datetime,timezone
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseBadRequest
@@ -61,7 +61,7 @@ def initiate_stk_push(phone, amount):
         token = generate_access_token()
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
         stk_password = base64.b64encode(
             (MPESA_SHORTCODE + MPESA_PASSKEY + timestamp).encode()
         ).decode()
@@ -132,7 +132,7 @@ def query_stk_push(checkout_request_id):
         token = generate_access_token()
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
         password = base64.b64encode(
             (MPESA_SHORTCODE + MPESA_PASSKEY + timestamp).encode()
         ).decode()
