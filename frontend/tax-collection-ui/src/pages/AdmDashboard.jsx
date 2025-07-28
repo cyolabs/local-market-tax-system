@@ -299,7 +299,7 @@ const initialTransactions = [
     status: "Completed",
     created_at: "2025-07-27T17:24:37.637446Z",
     receipt_number: "RCP009",
-    checkout_id: "ws_CO_270720252024307794917386"
+    checkout_id: "ws_CO_270720252025307794917386"
   },
   {
     id: 10,
@@ -374,7 +374,7 @@ const initialFeedback = [
     subject: "System Issue",
     message: "I experienced some delays in payment confirmation yesterday. The system took about 10 minutes to confirm my payment. Please look into this issue.",
     status: "Unread",
-    created_at: "2024-07-27T14:20:00Z",
+    created_at: "2025-07-27T14:20:00Z",
     priority: "High"
   },
   {
@@ -384,7 +384,7 @@ const initialFeedback = [
     subject: "Feature Request",
     message: "It would be great to have monthly payment summaries sent via email. This would help us keep better records of our tax payments.",
     status: "In Review",
-    created_at: "2024-07-26T16:45:00Z",
+    created_at: "2025-07-26T16:45:00Z",
     priority: "Medium"
   },
   {
@@ -394,7 +394,7 @@ const initialFeedback = [
     subject: "Mobile App Request",
     message: "Please consider developing a mobile app for easier access to the payment system when we're at the market.",
     status: "Unread",
-    created_at: "2024-07-25T11:30:00Z",
+    created_at: "2025-07-25T11:30:00Z",
     priority: "Medium"
   },
   {
@@ -404,28 +404,23 @@ const initialFeedback = [
     subject: "Receipt Issue",
     message: "I couldn't download my receipt after payment. Had to contact support to get it resolved.",
     status: "Read",
-    created_at: "2024-07-24T09:15:00Z",
+    created_at: "2025-07-24T09:15:00Z",
     priority: "High"
   }
 ];
 
 // Chart data for analytics
 const revenueData = [
-  { month: 'Jan', revenue: 45000, transactions: 120, users: 15 },
-  { month: 'Feb', revenue: 52000, transactions: 140, users: 18 },
-  { month: 'Mar', revenue: 48000, transactions: 130, users: 22 },
-  { month: 'Apr', revenue: 61000, transactions: 160, users: 25 },
-  { month: 'May', revenue: 55000, transactions: 145, users: 28 },
-  { month: 'Jun', revenue: 67000, transactions: 180, users: 32 },
-  { month: 'Jul', revenue: 72000, transactions: 190, users: 35 }
+  { month: 'Jun', revenue: 2, transactions: 2, users: 5 },
+  { month: 'Jul', revenue: 9, transactions: 9, users: 13 }
 ];
 
 const categoryData = [
-  { name: 'Fresh products', value: 35, amount: 52500, color: '#8884d8' },
-  { name: 'Livestock and meat', value: 25, amount: 37500, color: '#82ca9d' },
-  { name: 'Fish vendors', value: 20, amount: 16000, color: '#ffc658' },
-  { name: 'Clothes and textile', value: 15, amount: 9000, color: '#ff7300' },
-  { name: 'Household goods', value: 5, amount: 3500, color: '#00ff88' }
+ { name: 'Fresh products', value: 4, amount: 4, color: '#8884d8' },
+  { name: 'Livestock', value: 3, amount: 3, color: '#82ca9d' },
+  { name: 'Fish', value: 2, amount: 2, color: '#ffc658' },
+  { name: 'Clothes', value: 1, amount: 1, color: '#ff7300' },
+  { name: 'Household goods', value: 5, amount: 1, color: '#00ff88' }
 ];
 
 const AdminDashboard = () => {
@@ -617,7 +612,7 @@ const AdminDashboard = () => {
     unreadFeedback: feedback.filter(f => f.status === "Unread").length,
     highPriorityFeedback: feedback.filter(f => f.priority === "High").length,
     availableReports: reportTypes.length,
-    lastReportDownload: "2024-07-28"
+    lastReportDownload: "2025-07-28"
   };
 
   const generateMockReport = (reportType) => {
@@ -734,70 +729,110 @@ const downloadReport = (reportType) => {
 
             {/* Charts */}
             <Row className="mb-4">
-              <Col lg={8} className="mb-4">
-                <Card>
-                  <Card.Header>
-                    <h5 className="mb-0">Revenue & User Growth Trend</h5>
-                  </Card.Header>
-                  <Card.Body>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={revenueData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis yAxisId="left" />
-                        <YAxis yAxisId="right" orientation="right" />
-                        <Tooltip />
-                        <Legend />
-                        <Line 
-                          yAxisId="left"
-                          type="monotone" 
-                          dataKey="revenue" 
-                          stroke="#8884d8" 
-                          strokeWidth={2}
-                          name="Revenue (KES)"
-                        />
-                        <Line 
-                          yAxisId="right"
-                          type="monotone" 
-                          dataKey="users" 
-                          stroke="#82ca9d" 
-                          strokeWidth={2}
-                          name="Total Users"
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </Card.Body>
-                </Card>
-              </Col>
-              <Col lg={4} className="mb-4">
-                <Card>
-                  <Card.Header>
-                    <h5 className="mb-0">Revenue by Category</h5>
-                  </Card.Header>
-                  <Card.Body>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={categoryData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {categoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </Card.Body>
-                </Card>
-              </Col>
-            </Row>
+  <Col lg={8} className="mb-4">
+    <Card>
+      <Card.Header className="d-flex justify-content-between align-items-center">
+        <h5 className="mb-0">Revenue & User Growth Trend</h5>
+        <div className="d-flex gap-2">
+          <Badge bg="primary">
+            Total Revenue: KES {revenueData.reduce((sum, month) => sum + month.revenue, 0)}
+          </Badge>
+          <Badge bg="success">
+            Total Users: {revenueData[revenueData.length - 1].users}
+          </Badge>
+        </div>
+      </Card.Header>
+      <Card.Body>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={revenueData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis 
+              yAxisId="left" 
+              domain={[0, 'dataMax + 2']}
+              label={{ value: 'Revenue (KES)', angle: -90, position: 'insideLeft' }}
+            />
+            <YAxis 
+              yAxisId="right" 
+              domain={[0, 'dataMax + 2']}
+              orientation="right" 
+              label={{ value: 'Total Users', angle: 90, position: 'insideRight' }}
+            />
+            <Tooltip 
+              formatter={(value, name) => {
+                if (name === 'Revenue (KES)') return [`KES ${value}`, name];
+                return [value, name];
+              }}
+            />
+            <Legend />
+            <Line 
+              yAxisId="left"
+              type="monotone" 
+              dataKey="revenue" 
+              stroke="#8884d8" 
+              strokeWidth={2}
+              name="Revenue (KES)"
+              dot={{ r: 4 }}
+              activeDot={{ r: 6 }}
+            />
+            <Line 
+              yAxisId="right"
+              type="monotone" 
+              dataKey="users" 
+              stroke="#82ca9d" 
+              strokeWidth={2}
+              name="Total Users"
+              dot={{ r: 4 }}
+              activeDot={{ r: 6 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card.Body>
+    </Card>
+  </Col>
+  <Col lg={4} className="mb-4">
+    <Card>
+      <Card.Header className="d-flex justify-content-between align-items-center">
+        <h5 className="mb-0">Revenue Distribution</h5>
+        <Badge bg="info">
+          Total: KES {categoryData.reduce((sum, cat) => sum + cat.amount, 0)}
+        </Badge>
+      </Card.Header>
+      <Card.Body>
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={categoryData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {categoryData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip 
+              formatter={(value, name, props) => {
+                const amount = categoryData.find(cat => cat.name === name)?.amount;
+                return [`KES ${amount}`, `${name} (${(props.percent * 100).toFixed(1)}%)`];
+              }}
+            />
+            <Legend 
+              formatter={(value) => {
+                const category = categoryData.find(cat => cat.name === value);
+                return `${value} (KES ${category?.amount})`;
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </Card.Body>
+    </Card>
+  </Col>
+</Row>
 
             {/* Recent Activity */}
             <Row>
