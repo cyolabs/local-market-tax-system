@@ -4,12 +4,6 @@ from rest_framework import serializers
 from .models import User, Feedback, PaymentTransaction
 from django.contrib.auth.password_validation import validate_password
 
-class FeedbackSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Feedback
-        fields = ['id', 'user', 'subject', 'message', 'submitted_at']
-        read_only_fields = ['id', 'submitted_at']
-
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
@@ -58,3 +52,39 @@ class PaymentTransactionSerializer(serializers.ModelSerializer):
             'transaction_date'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'user_name']
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.full_name', read_only=True)
+    user_username = serializers.CharField(source='user.username', read_only=True)
+    user_phone = serializers.CharField(source='user.phone_number', read_only=True)
+    
+    class Meta:
+        model = Feedback
+        fields = [
+            'id', 'subject', 'message', 'status', 'priority',
+            'admin_response', 'admin_user', 'user_name', 'user_username', 'user_phone',
+            'created_at', 'updated_at', 'resolved_at', 'is_resolved'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'resolved_at', 'is_resolved', 'user_name', 'user_username', 'user_phone']
+    
+    def create(self, validated_data):
+        # The user will be set in the view
+        return super().create(validated_data)
+
+class FeedbackCreateSerializer(serializers.ModelSerializer):
+    """Simplified serializer for creating feedback"""
+    class Meta:
+        model = Feedback
+        fields = ['subject', 'message']
+    
+    def validate_subject(self):
+        subject = self.validated_data.get('subject', '').strip()
+        if len(subject) < 5:
+            raise serializers.ValidationError("Subject must be at least 5 characters long.")
+        return subject
+    
+    def validate_message(self):
+        message = self.validated_data.get('message', '').strip()
+        if len(message) < 10:
+            raise serializers.ValidationError("Message must be at least 10 characters long.")
+        return message
