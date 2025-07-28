@@ -71,15 +71,6 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.full_name} ({self.national_id})"
 
-class Feedback(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    subject = models.CharField(max_length=255)
-    message = models.TextField()
-    submitted_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"Feedback from {self.user.email} - {self.subject}"
-
 # ADD THIS NEW MODEL
 class PaymentTransaction(models.Model):
     STATUS_CHOICES = [
@@ -122,3 +113,46 @@ class PaymentTransaction(models.Model):
     
     def __str__(self):
         return f"Payment {self.transaction_id} - {self.user.full_name} - KES {self.amount}"
+
+# Feedback model for user feedback and admin responses 
+class Feedback(models.Model):
+    FEEDBACK_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('reviewed', 'Reviewed'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed'),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('urgent', 'Urgent'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feedbacks')
+    subject = models.CharField(max_length=200)
+    message = models.TextField()
+    status = models.CharField(max_length=20, choices=FEEDBACK_STATUS_CHOICES, default='pending')
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
+    
+    # Admin response fields
+    admin_response = models.TextField(blank=True, null=True)
+    admin_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='admin_responses')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Feedback'
+        verbose_name_plural = 'Feedbacks'
+    
+    def __str__(self):
+        return f"{self.subject} - {self.user.full_name or self.user.username} ({self.status})"
+    
+    @property
+    def is_resolved(self):
+        return self.status in ['resolved', 'closed']
