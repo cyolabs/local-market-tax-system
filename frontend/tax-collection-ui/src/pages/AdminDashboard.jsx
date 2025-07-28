@@ -33,55 +33,65 @@ import {
 
 // Mock data
 const initialUsers = [
+   {
+    id: 1,
+    full_name: "Tax Api",
+    email: "taxapi@gmail.com",
+    phone: "254709023456",
+    business_type: "Fresh products trader",
+    status: "Active",
+    created_at: "2025-07-15T10:30:00Z",
+    last_login: "2025-07-28T14:20:00Z"
+  },
   {
     id: 1,
     full_name: "John Doe",
-    email: "john@example.com",
+    email: "john@gmail.com",
     phone: "254700123456",
     business_type: "Fresh products trader",
     status: "Active",
-    created_at: "2024-01-15T10:30:00Z",
-    last_login: "2024-07-28T14:20:00Z"
+    created_at: "2025-07-15T10:30:00Z",
+    last_login: "2025-07-28T14:20:00Z"
   },
   {
     id: 2,
     full_name: "Mary Smith",
-    email: "mary@example.com",
+    email: "mary@gmail.com",
     phone: "254700123457",
     business_type: "Livestock and meat",
     status: "Active",
-    created_at: "2024-02-20T09:15:00Z",
-    last_login: "2024-07-27T16:45:00Z"
+    created_at: "2025-07-20T09:15:00Z",
+    last_login: "2025-07-27T16:45:00Z"
   },
   {
     id: 3,
     full_name: "Peter Johnson",
-    email: "peter@example.com",
+    email: "peter@gmail.com",
     phone: "254700123458",
     business_type: "Fish vendor",
     status: "Inactive",
-    created_at: "2024-03-10T11:00:00Z",
-    last_login: "2024-07-20T12:30:00Z"
+    created_at: "2025-07-10T11:00:00Z",
+    last_login: "2025-07-20T12:30:00Z"
   },
   {
     id: 4,
     full_name: "Alice Brown",
-    email: "alice@example.com",
+    email: "alice@gmail.com",
     phone: "254700123459",
     business_type: "Clothes and textile",
     status: "Active",
-    created_at: "2024-04-05T08:45:00Z",
-    last_login: "2024-07-28T13:15:00Z"
+    created_at: "2025-07-05T08:45:00Z",
+    last_login: "2025-07-28T13:15:00Z"
   },
   {
     id: 5,
     full_name: "David Wilson",
-    email: "david@example.com",
+    email: "david@gmail.com",
     phone: "254700123460",
     business_type: "Household goods",
     status: "Active",
-    created_at: "2024-05-12T15:20:00Z",
-    last_login: "2024-07-26T10:10:00Z"
+    created_at: "2025-05-12T15:20:00Z",
+    last_login: "2025-07-26T10:10:00Z"
   }
 ];
 
@@ -113,9 +123,9 @@ const initialTransactions = [
     phone: "254700123456",
     mpesa_code: "QGH7XY8Z9A",
     status: "Completed",
-    created_at: "2024-07-28T10:30:00Z",
+    created_at: "2025-07-28T10:30:00Z",
     receipt_number: "RCP001",
-    checkout_id: "ws_CO_280720241030001"
+    checkout_id: "ws_CO_280720251030001"
   },
   {
     id: 2,
@@ -126,9 +136,9 @@ const initialTransactions = [
     phone: "254700123457",
     mpesa_code: "BGH7XY8Z9B",
     status: "Completed",
-    created_at: "2024-07-27T14:20:00Z",
+    created_at: "2025-07-27T14:20:00Z",
     receipt_number: "RCP002",
-    checkout_id: "ws_CO_270720241420002"
+    checkout_id: "ws_CO_270720251420002"
   },
   {
     id: 3,
@@ -139,9 +149,9 @@ const initialTransactions = [
     phone: "254700123458",
     mpesa_code: "CGH7XY8Z9C",
     status: "Failed",
-    created_at: "2024-07-26T16:45:00Z",
+    created_at: "2025-07-26T16:45:00Z",
     receipt_number: "RCP003",
-    checkout_id: "ws_CO_260720241645003"
+    checkout_id: "ws_CO_260720251645003"
   },
   {
     id: 4,
@@ -152,9 +162,9 @@ const initialTransactions = [
     phone: "254700123459",
     mpesa_code: "DGH7XY8Z9D",
     status: "Pending",
-    created_at: "2024-07-25T11:30:00Z",
+    created_at: "2025-07-25T11:30:00Z",
     receipt_number: "RCP004",
-    checkout_id: "ws_CO_250720241130004"
+    checkout_id: "ws_CO_250720251130004"
   },
   {
     id: 5,
@@ -165,9 +175,9 @@ const initialTransactions = [
     phone: "254700123456",
     mpesa_code: "EGH7XY8Z9E",
     status: "Completed",
-    created_at: "2024-07-24T09:15:00Z",
+    created_at: "2025-07-24T09:15:00Z",
     receipt_number: "RCP005",
-    checkout_id: "ws_CO_240720240915005"
+    checkout_id: "ws_CO_240720250915005"
   },
   {
     id: 6,
@@ -178,9 +188,9 @@ const initialTransactions = [
     phone: "254700123460",
     mpesa_code: "FGH7XY8Z9F",
     status: "Completed",
-    created_at: "2024-07-23T13:45:00Z",
+    created_at: "2025-07-23T13:45:00Z",
     receipt_number: "RCP006",
-    checkout_id: "ws_CO_230720241345006"
+    checkout_id: "ws_CO_230720251345006"
   }
 ];
 
@@ -192,7 +202,7 @@ const initialFeedback = [
     subject: "Payment Process",
     message: "The payment process is very smooth and user-friendly. Thank you for making it so easy to pay our taxes!",
     status: "Read",
-    created_at: "2024-07-28T10:30:00Z",
+    created_at: "2025-07-28T10:30:00Z",
     priority: "Low"
   },
   {
@@ -1143,9 +1153,6 @@ const downloadReport = (reportType) => {
         <div>
           <Badge bg="info" className="me-2">
             CSV Format
-          </Badge>
-          <Badge bg="secondary">
-            Mock Data
           </Badge>
         </div>
       </div>
