@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-
-import { submitFeedback } from "../services/api";
+import { submitFeedback, getTaxHistory } from "../services/api";
 import {
   Container,
   Row,
@@ -12,7 +11,8 @@ import {
   Table,
   Form,
   Modal,
-  Spinner
+  Spinner,
+  Badge
 } from "react-bootstrap";
 import {
   initiateSTKPush,
@@ -28,7 +28,6 @@ const categories = [
   { title: "Clothes and textile", image: "/images/clothes.jpg", amount: 600 },
   { title: "Household goods", image: "/images/household.jpg", amount: 700 },
 ];
-
 
 const Receipt = ({ transaction, show, onHide }) => {
   if (!transaction) return null;
@@ -46,22 +45,22 @@ const Receipt = ({ transaction, show, onHide }) => {
             <tbody>
               <tr>
                 <td><strong>Receipt No:</strong></td>
-                <td>{transaction.receipt_number}</td>
+                <td>{transaction.mpesa_code || transaction.checkout_id}</td>
               </tr>
               <tr>
                 <td><strong>Date:</strong></td>
-                <td>{new Date(transaction.created_at).toLocaleString()}</td>
+                <td>{new Date(transaction.timestamp || transaction.created_at).toLocaleString()}</td>
               </tr>
               <tr className="border-top">
                 <td colSpan="2"><strong>TRANSACTION DETAILS</strong></td>
               </tr>
               <tr>
                 <td><strong>Amount:</strong></td>
-                <td>KES {transaction.amount.toLocaleString()}</td>
+                <td>KES {parseFloat(transaction.amount).toLocaleString()}</td>
               </tr>
               <tr>
                 <td><strong>Category:</strong></td>
-                <td>{transaction.account_reference}</td>
+                <td>{transaction.account_reference || transaction.category || "Market Tax"}</td>
               </tr>
               <tr>
                 <td><strong>Phone:</strong></td>
@@ -70,14 +69,20 @@ const Receipt = ({ transaction, show, onHide }) => {
               <tr>
                 <td><strong>Status:</strong></td>
                 <td>
-                  <span className={`badge ${
-                    transaction.status === 'Completed' ? 'bg-success' : 
-                    transaction.status === 'Failed' ? 'bg-danger' : 'bg-warning'
-                  }`}>
+                  <Badge bg={
+                    transaction.status === 'Completed' || transaction.status === 'Success' ? 'success' : 
+                    transaction.status === 'Failed' ? 'danger' : 'warning'
+                  }>
                     {transaction.status}
-                  </span>
+                  </Badge>
                 </td>
               </tr>
+              {transaction.mpesa_code && (
+                <tr>
+                  <td><strong>M-Pesa Code:</strong></td>
+                  <td>{transaction.mpesa_code}</td>
+                </tr>
+              )}
             </tbody>
           </Table>
           
@@ -120,51 +125,97 @@ const VendorDashboard = () => {
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [feedbackSuccess, setFeedbackSuccess] = useState("");
 
-const handlePayClick = (category) => {
-  const url = `https://local-market-tax-system-7fuw.onrender.com/mpesa/?category=${encodeURIComponent(category.title)}&amount=${category.amount}`;
-  const popup = window.open(url, '_blank', 'width=500,height=650');
-  if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-    alert('Popup blocked. Please allow popups for this site.');
-  }
-};
+  // Tax history filters
+  const [statusFilter, setStatusFilter] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
-
-
- const fetchTransactions = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-    
-    const response = await getPaymentTransactions();
-    console.log('Transactions Response:', response); // Debug
-    
-    if (response.success) {
-      setTransactions(response.data || []);
-    } else {
-      setError(response.message);
+  const handlePayClick = (category) => {
+    const url = `https://local-market-tax-system-7fuw.onrender.com/mpesa/?category=${encodeURIComponent(category.title)}&amount=${category.amount}`;
+    const popup = window.open(url, '_blank', 'width=500,height=650');
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      alert('Popup blocked. Please allow popups for this site.');
     }
-  } catch (err) {
-    console.error("Unexpected error:", err);
-    setError("An unexpected error occurred");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  const fetchTransactions = async (filters = {}) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Try to get from your tax_api first
+      const response = await getTaxHistory(filters);
+      console.log('Tax History Response:', response);
+      
+      if (response.success && response.data && response.data.length > 0) {
+        setTransactions(response.data);
+      } else {
+        // Fallback to M-Pesa service if tax_api returns empty
+        const mpesaResponse = await getPaymentTransactions();
+        if (mpesaResponse.success) {
+          setTransactions(mpesaResponse.data || []);
+        } else {
+          setError(response.message || mpesaResponse.message || "No transactions found");
+        }
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      setError("An unexpected error occurred while fetching transactions");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const handleFeedbackSubmit = async (e) => {
-  e.preventDefault();
-  const result = await submitFeedback(feedbackSubject, feedbackMessage);
-  if (result.success) {
-    setFeedbackSuccess("Thank you for your feedback!");
-    setFeedbackSubject("");
-    setFeedbackMessage("");
-    setTimeout(() => setFeedbackSuccess(""), 3000);
-  } else {
-    setError(result.message || "Failed to submit feedback");
-  }
-};
+  const handleFilterChange = () => {
+    const filters = {};
+    if (statusFilter) filters.status = statusFilter;
+    if (startDate) filters.start_date = startDate;
+    if (endDate) filters.end_date = endDate;
+    
+    fetchTransactions(filters);
+  };
 
+  const clearFilters = () => {
+    setStatusFilter("");
+    setStartDate("");
+    setEndDate("");
+    fetchTransactions();
+  };
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const result = await submitFeedback(feedbackSubject, feedbackMessage);
+      if (result.success) {
+        setFeedbackSuccess("Thank you for your feedback!");
+        setFeedbackSubject("");
+        setFeedbackMessage("");
+        setTimeout(() => setFeedbackSuccess(""), 3000);
+      } else {
+        setError(result.message || "Failed to submit feedback");
+      }
+    } catch (error) {
+      setError("Failed to submit feedback. Please try again.");
+    }
+  };
+
+  const handleViewReceipt = (transaction) => {
+    setSelectedTransaction(transaction);
+    setShowReceipt(true);
+  };
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      'Completed': { bg: 'success', text: 'Completed' },
+      'Success': { bg: 'success', text: 'Success' },
+      'Pending': { bg: 'warning', text: 'Pending' },
+      'Failed': { bg: 'danger', text: 'Failed' },
+      'Cancelled': { bg: 'secondary', text: 'Cancelled' }
+    };
+    
+    const config = statusConfig[status] || { bg: 'secondary', text: status };
+    return <Badge bg={config.bg}>{config.text}</Badge>;
+  };
 
   useEffect(() => {
     if (activeSection === "tax-history") {
@@ -239,43 +290,190 @@ const handleFeedbackSubmit = async (e) => {
         );
 
       case "tax-history":
-  return (
-    <>
-      <h4 className="mb-4 text-center">Tax History</h4>
-      {loading ? (
-        <div className="text-center">
-          <Spinner animation="border" variant="primary" />
-          <p>Loading transactions...</p>
-        </div>
-      ) : error ? (
-        <Alert variant="danger">
-          {error}
-          <Button 
-            variant="link" 
-            onClick={fetchTransactions}
-            className="p-0 ms-2"
-          >
-            Retry
-          </Button>
-        </Alert>
-      ) : transactions.length > 0 ? (
-        <Table striped bordered hover responsive>
-          {/* Table headers */}
-          <tbody>
-            {transactions.map((txn) => (
-              <tr key={txn.id}>
-                {/* Table cells */}
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      ) : (
-        <Alert variant="info">
-          No transactions found. Make a payment to see your history.
-        </Alert>
-      )}
-    </>
-  );
+        return (
+          <>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h4 className="mb-0">Tax Payment History</h4>
+              <Button 
+                variant="outline-primary" 
+                size="sm"
+                onClick={() => fetchTransactions()}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Spinner as="span" animation="border" size="sm" className="me-2" />
+                    Refreshing...
+                  </>
+                ) : (
+                  "Refresh"
+                )}
+              </Button>
+            </div>
+
+            {/* Filters */}
+            <Card className="mb-4">
+              <Card.Body>
+                <h6 className="mb-3">Filter Transactions</h6>
+                <Row>
+                  <Col md={3}>
+                    <Form.Group>
+                      <Form.Label>Status</Form.Label>
+                      <Form.Select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                      >
+                        <option value="">All Status</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Success">Success</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Failed">Failed</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={3}>
+                    <Form.Group>
+                      <Form.Label>Start Date</Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={3}>
+                    <Form.Group>
+                      <Form.Label>End Date</Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={3} className="d-flex align-items-end">
+                    <div className="d-flex gap-2">
+                      <Button 
+                        variant="primary" 
+                        size="sm"
+                        onClick={handleFilterChange}
+                      >
+                        Apply
+                      </Button>
+                      <Button 
+                        variant="outline-secondary" 
+                        size="sm"
+                        onClick={clearFilters}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+
+            {loading ? (
+              <div className="text-center py-5">
+                <Spinner animation="border" variant="primary" />
+                <p className="mt-2">Loading transactions...</p>
+              </div>
+            ) : error ? (
+              <Alert variant="danger">
+                {error}
+                <Button 
+                  variant="link" 
+                  onClick={() => fetchTransactions()}
+                  className="p-0 ms-2"
+                >
+                  Retry
+                </Button>
+              </Alert>
+            ) : transactions.length > 0 ? (
+              <>
+                <div className="mb-3">
+                  <small className="text-muted">
+                    Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
+                  </small>
+                </div>
+                <div className="table-responsive">
+                  <Table striped bordered hover>
+                    <thead className="table-dark">
+                      <tr>
+                        <th>Date</th>
+                        <th>Receipt/Transaction ID</th>
+                        <th>Amount</th>
+                        <th>Category</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>M-Pesa Code</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.map((txn, index) => (
+                        <tr key={txn.id || index}>
+                          <td>
+                            {new Date(
+                              txn.timestamp || txn.created_at || txn.transaction_date
+                            ).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </td>
+                          <td>
+                            <small className="font-monospace">
+                              {txn.receipt_number || txn.transaction_id || txn.checkout_id}
+                            </small>
+                          </td>
+                          <td>
+                            <strong>KES {parseFloat(txn.amount).toLocaleString()}</strong>
+                          </td>
+                          <td>
+                            <small>
+                              {txn.account_reference || txn.category || "Market Tax"}
+                            </small>
+                          </td>
+                          <td>{txn.phone_number}</td>
+                          <td>{getStatusBadge(txn.status)}</td>
+                          <td>
+                            {txn.mpesa_code ? (
+                              <small className="font-monospace text-success">
+                                {txn.mpesa_code}
+                              </small>
+                            ) : (
+                              <small className="text-muted">-</small>
+                            )}
+                          </td>
+                          <td>
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              onClick={() => handleViewReceipt(txn)}
+                            >
+                              View Receipt
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              </>
+            ) : (
+              <Alert variant="info" className="text-center py-5">
+                <h5>No transactions found</h5>
+                <p className="mb-0">
+                  You haven't made any payments yet. Make a payment to see your transaction history.
+                </p>
+              </Alert>
+            )}
+          </>
+        );
+
       case "feedback":
         return (
           <>
@@ -296,6 +494,11 @@ const handleFeedbackSubmit = async (e) => {
                 {feedbackSuccess}
               </Alert>
             )}
+            {error && (
+              <Alert variant="danger" dismissible onClose={() => setError("")}>
+                {error}
+              </Alert>
+            )}
             <Form onSubmit={handleFeedbackSubmit}>
               <Form.Group className="mb-3">
                 <Form.Label>Subject:</Form.Label>
@@ -303,6 +506,7 @@ const handleFeedbackSubmit = async (e) => {
                   type="text"
                   value={feedbackSubject}
                   onChange={(e) => setFeedbackSubject(e.target.value)}
+                  placeholder="Enter feedback subject"
                   required
                 />
               </Form.Group>
@@ -313,6 +517,7 @@ const handleFeedbackSubmit = async (e) => {
                   rows={4}
                   value={feedbackMessage}
                   onChange={(e) => setFeedbackMessage(e.target.value)}
+                  placeholder="Share your thoughts, suggestions, or concerns..."
                   required
                 />
               </Form.Group>
@@ -328,7 +533,7 @@ const handleFeedbackSubmit = async (e) => {
                   Clear
                 </Button>
                 <Button variant="danger" type="submit">
-                  Submit
+                  Submit Feedback
                 </Button>
               </div>
             </Form>
@@ -359,7 +564,7 @@ const handleFeedbackSubmit = async (e) => {
             <small>{user?.business_type || "Vendor"}</small>
           </div>
           <img
-            src="/images/profile.jpg"
+            src="/username.png"
             alt="Profile"
             style={{
               width: "40px",
@@ -389,7 +594,7 @@ const handleFeedbackSubmit = async (e) => {
             variant={activeSection === "tax-history" ? "secondary" : "light"}
             onClick={() => setActiveSection("tax-history")}
           >
-            Tax history
+            Tax History
           </Button>
         </div>
       </div>
