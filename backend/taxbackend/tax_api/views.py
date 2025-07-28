@@ -8,9 +8,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAdminUser
 
-from .serializers import UserSerializer, FeedbackSerializer, PaymentTransactionSerializer
+from .serializers import UserSerializer, FeedbackSerializer, PaymentTransactionSerializer, FeedbackCreateSerializer,FeedbackSerializer
 from .permissions import IsVendor, IsAdmin
-from .models import User, PaymentTransaction
+from .models import User, PaymentTransaction, Feedback
+import traceback
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -168,24 +169,6 @@ class RegisteredUsersAPI(APIView):
         users = User.objects.all().order_by('-date_registered')
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
-
-class SubmitFeedbackView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        serializer = FeedbackSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response({'success': True, 'message': 'Feedback submitted successfully'}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# ADD THIS NEW VIEW
-
-
-# Update your TaxHistoryAPI view to include M-Pesa transactions
-# Replace your TaxHistoryAPI view in backend/taxbackend/tax_api/views.py
-
-
 
 class TaxHistoryAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -488,5 +471,177 @@ class TaxHistoryMpesaAPI(APIView):
             return Response({
                 'success': False,
                 'message': 'Failed to create payment record',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SubmitFeedbackView(APIView):
+    """Submit new feedback"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        print(f"🔍 Feedback submission by user: {request.user}")
+        print(f"📋 Feedback data: {request.data}")
+        
+        try:
+            # Use the create serializer for validation
+            serializer = FeedbackCreateSerializer(data=request.data)
+            
+            if serializer.is_valid():
+                # Create the feedback with the authenticated user
+                feedback = Feedback.objects.create(
+                    user=request.user,
+                    subject=serializer.validated_data['subject'],
+                    message=serializer.validated_data['message'],
+                    status='pending',
+                    priority='medium'
+                )
+                
+                print(f"✅ Feedback created with ID: {feedback.id}")
+                
+                # Return the created feedback data
+                response_serializer = FeedbackSerializer(feedback)
+                
+                return Response({
+                    'success': True,
+                    'message': 'Thank you for your feedback! We will review it shortly.',
+                    'feedback': response_serializer.data
+                }, status=status.HTTP_201_CREATED)
+            
+            else:
+                print(f"❌ Validation errors: {serializer.errors}")
+                return Response({
+                    'success': False,
+                    'message': 'Please check your input and try again.',
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            print(f"❌ Error creating feedback: {str(e)}")
+            print(f"❌ Traceback: {traceback.format_exc()}")
+            
+            return Response({
+                'success': False,
+                'message': 'Failed to submit feedback. Please try again.',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserFeedbackListView(APIView):
+    """Get feedback submitted by the current user"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            feedbacks = Feedback.objects.filter(user=request.user)
+            serializer = FeedbackSerializer(feedbacks, many=True)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data,
+                'count': feedbacks.count()
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"❌ Error fetching user feedback: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'Failed to fetch feedback',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AdminFeedbackListView(APIView):
+    """Admin view to see all feedback submissions"""
+    permission_classes = [IsAdminUser]
+    
+    def get(self, request):
+        try:
+            # Get query parameters for filtering
+            status_filter = request.query_params.get('status', '')
+            priority_filter = request.query_params.get('priority', '')
+            
+            # Base queryset
+            queryset = Feedback.objects.all()
+            
+            # Apply filters
+            if status_filter:
+                queryset = queryset.filter(status=status_filter)
+            
+            if priority_filter:
+                queryset = queryset.filter(priority=priority_filter)
+            
+            # Order by priority and creation date
+            priority_order = ['urgent', 'high', 'medium', 'low']
+            queryset = queryset.extra(
+                select={'priority_order': f"CASE {' '.join(f'WHEN priority = %s THEN {i}' for i, p in enumerate(priority_order))} END"},
+                select_params=priority_order
+            ).order_by('priority_order', '-created_at')
+            
+            serializer = FeedbackSerializer(queryset, many=True)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data,
+                'count': queryset.count(),
+                'filters': {
+                    'status': status_filter,
+                    'priority': priority_filter
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"❌ Error fetching admin feedback: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'Failed to fetch feedback',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AdminFeedbackResponseView(APIView):
+    """Admin can respond to feedback"""
+    permission_classes = [IsAdminUser]
+    
+    def post(self, request, feedback_id):
+        try:
+            feedback = Feedback.objects.get(id=feedback_id)
+            
+            admin_response = request.data.get('admin_response', '').strip()
+            new_status = request.data.get('status', feedback.status)
+            
+            if not admin_response:
+                return Response({
+                    'success': False,
+                    'message': 'Admin response is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Update feedback
+            feedback.admin_response = admin_response
+            feedback.status = new_status
+            feedback.admin_user = request.user
+            
+            if new_status in ['resolved', 'closed']:
+                from django.utils import timezone
+                feedback.resolved_at = timezone.now()
+            
+            feedback.save()
+            
+            serializer = FeedbackSerializer(feedback)
+            
+            return Response({
+                'success': True,
+                'message': 'Response added successfully',
+                'feedback': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Feedback.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Feedback not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+        except Exception as e:
+            print(f"❌ Error responding to feedback: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'Failed to add response',
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
