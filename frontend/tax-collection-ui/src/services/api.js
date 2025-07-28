@@ -262,53 +262,53 @@ export const getUsername = () => {
 
 // =============================================================================
 // API HEALTH CHECK - for debugging
-// =============================================================================
-export const testApiConnectivity = async () => {
-  console.log('Testing API connectivity...');
-  console.log('Base URL:', API_BASE_URL);
-  console.log('Full API URL:', `${API_BASE_URL}/api`);
+// // =============================================================================
+// export const testApiConnectivity = async () => {
+//   console.log('Testing API connectivity...');
+//   console.log('Base URL:', API_BASE_URL);
+//   console.log('Full API URL:', `${API_BASE_URL}/api`);
   
-  try {
-    // Test basic connectivity - try multiple endpoints
-    const endpoints = [
-      '/health/',
-      '/tax-history/',
-      '/'
-    ];
+//   try {
+//     // Test basic connectivity - try multiple endpoints
+//     const endpoints = [
+//       '/health/',
+//       '/tax-history/',
+//       '/'
+//     ];
     
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`Testing endpoint: ${endpoint}`);
-        const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
-          method: 'GET',
-          headers: getAuthHeaders(),
-        });
+//     for (const endpoint of endpoints) {
+//       try {
+//         console.log(`Testing endpoint: ${endpoint}`);
+//         const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
+//           method: 'GET',
+//           headers: getAuthHeaders(),
+//         });
         
-        console.log(`Endpoint ${endpoint} - Status:`, response.status);
+//         console.log(`Endpoint ${endpoint} - Status:`, response.status);
         
-        if (response.ok || response.status === 401) { // 401 means endpoint exists but needs auth
-          return { 
-            success: true, 
-            message: `API is reachable via ${endpoint}`,
-            endpoint: endpoint,
-            status: response.status
-          };
-        }
-      } catch (endpointError) {
-        console.log(`Endpoint ${endpoint} failed:`, endpointError.message);
-        continue;
-      }
-    }
+//         if (response.ok || response.status === 401) { // 401 means endpoint exists but needs auth
+//           return { 
+//             success: true, 
+//             message: `API is reachable via ${endpoint}`,
+//             endpoint: endpoint,
+//             status: response.status
+//           };
+//         }
+//       } catch (endpointError) {
+//         console.log(`Endpoint ${endpoint} failed:`, endpointError.message);
+//         continue;
+//       }
+//     }
     
-    throw new Error('All endpoints failed');
-  } catch (error) {
-    console.error('API connectivity test failed:', error);
-    return { 
-      success: false, 
-      message: `API connectivity failed: ${error.message}`,
-      url: `${API_BASE_URL}/api`
-    };
-  }
-};
+//     throw new Error('All endpoints failed');
+//   } catch (error) {
+//     console.error('API connectivity test failed:', error);
+//     return { 
+//       success: false, 
+//       message: `API connectivity failed: ${error.message}`,
+//       url: `${API_BASE_URL}/api`
+//     };
+//   }
+// };
 
 export default api;

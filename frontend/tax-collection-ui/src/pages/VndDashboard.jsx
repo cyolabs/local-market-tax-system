@@ -153,16 +153,16 @@ const fetchTransactions = async (filters = {}) => {
     console.log('================================');
     
     // First, test API connectivity
-    try {
-      const connectivityTest = await testApiConnectivity();
-      console.log('API Connectivity Test:', connectivityTest);
-      if (!connectivityTest.success) {
-        throw new Error(`API connectivity failed: ${connectivityTest.message}`);
-      }
-    } catch (connectivityError) {
-      console.error('Connectivity test failed:', connectivityError);
-      // Continue anyway, maybe it will work
-    }
+    // try {
+    //   const connectivityTest = await testApiConnectivity();
+    //   console.log('API Connectivity Test:', connectivityTest);
+    //   if (!connectivityTest.success) {
+    //     throw new Error(`API connectivity failed: ${connectivityTest.message}`);
+    //   }
+    // } catch (connectivityError) {
+    //   console.error('Connectivity test failed:', connectivityError);
+    //   // Continue anyway, maybe it will work
+    // }
     
     let transactionsFound = false;
     let lastError = null;
@@ -268,39 +268,39 @@ const fetchTransactions = async (filters = {}) => {
 };
 
 // Add this useEffect to test API on component mount
-useEffect(() => {
-  console.log('VendorDashboard mounted - Running diagnostics...');
+// useEffect(() => {
+//   console.log('VendorDashboard mounted - Running diagnostics...');
   
-  // Log environment info
-  console.log('Environment Info:', {
-    NODE_ENV: process.env.NODE_ENV,
-    REACT_APP_API_URL: process.env.REACT_APP_API_URL,
-    currentOrigin: window.location.origin,
-    userAgent: navigator.userAgent
-  });
+//   // Log environment info
+//   console.log('Environment Info:', {
+//     NODE_ENV: process.env.NODE_ENV,
+//     REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+//     currentOrigin: window.location.origin,
+//     userAgent: navigator.userAgent
+//   });
   
-  // Test API connectivity when component mounts
-  const runDiagnostics = async () => {
-    try {
-      // Test API connectivity
-      const connectivityResult = await testApiConnectivity();
-      console.log('API connectivity test result:', connectivityResult);
+//   // Test API connectivity when component mounts
+//   const runDiagnostics = async () => {
+//     try {
+//       // Test API connectivity
+//       const connectivityResult = await testApiConnectivity();
+//       console.log('API connectivity test result:', connectivityResult);
       
-      // Test M-Pesa endpoints
-      if (typeof debugMpesaEndpoints === 'function') {
-        await debugMpesaEndpoints();
-      }
+//       // Test M-Pesa endpoints
+//       if (typeof debugMpesaEndpoints === 'function') {
+//         await debugMpesaEndpoints();
+//       }
       
-      if (!connectivityResult.success) {
-        setError(`API connectivity issue: ${connectivityResult.message}`);
-      }
-    } catch (diagnosticError) {
-      console.error('Diagnostic error:', diagnosticError);
-    }
-  };
+//       if (!connectivityResult.success) {
+//         setError(`API connectivity issue: ${connectivityResult.message}`);
+//       }
+//     } catch (diagnosticError) {
+//       console.error('Diagnostic error:', diagnosticError);
+//     }
+//   };
   
-  runDiagnostics();
-}, []);
+//   runDiagnostics();
+// }, []);
 
 // Enhanced useEffect for fetching transactions
 useEffect(() => {
@@ -314,7 +314,7 @@ useEffect(() => {
 // Add a debug button to the tax-history section (you can remove this later)
 // Add this right after the "Refresh" button in the tax-history section:
 
-<Button 
+{/* <Button 
   variant="outline-info" 
   size="sm"
   onClick={async () => {
@@ -331,7 +331,7 @@ useEffect(() => {
   className="ms-2"
 >
   Debug API
-</Button>
+</Button> */}
 
   const handleFilterChange = () => {
     const filters = {};
