@@ -15,9 +15,11 @@ import {
   Badge
 } from "react-bootstrap";
 import {
+  
   initiateSTKPush,
   getPaymentTransactions,
-  downloadReceipt
+  downloadReceipt,
+  debugMpesaEndpoints
 } from "../services/mpesaService";
 import { useAuth } from "../contexts/AuthContext";
 
