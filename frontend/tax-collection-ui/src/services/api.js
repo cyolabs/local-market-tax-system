@@ -1,84 +1,127 @@
-// frontend/tax-collection-ui/src/services/api.js - Debug Version
+
+
+
+// src/services/api.js - CENTRALIZED API SERVICE
 
 const API_BASE_URL = 'https://local-market-tax-system-7fuw.onrender.com/api/';
 
-// Helper function to get auth token
-const getAuthToken = () => {
-  const token = localStorage.getItem('access_token');
-  console.log('Auth token:', token ? 'Token exists' : 'No token found');
-  return token;
-};
-
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = getAuthToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
+// Helper function for API calls
+const apiCall = async (endpoint, options = {}) => {
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...options.headers,
+    },
+    ...options,
   };
-};
 
-// Tax History API with detailed debugging
-export const getTaxHistory = async (filters = {}) => {
-  console.log('🔍 getTaxHistory called with filters:', filters);
-  
+  // Add authentication token if available
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  console.log(`📡 API Call: ${endpoint}`, config);
+
   try {
-    const queryParams = new URLSearchParams();
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    const data = await response.json();
     
-    // Add filters if provided
-    if (filters.status) queryParams.append('status', filters.status);
-    if (filters.start_date) queryParams.append('start_date', filters.start_date);
-    if (filters.end_date) queryParams.append('end_date', filters.end_date);
-    
-    const url = `${API_BASE_URL}/tax-history/${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    console.log('📍 Request URL:', url);
-    
-    const headers = getAuthHeaders();
-    console.log('📋 Request headers:', headers);
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: headers,
-    });
+    console.log(`📦 API Response: ${endpoint}`, { status: response.status, data });
 
-    console.log('📨 Response status:', response.status);
-    console.log('📨 Response ok:', response.ok);
-    
-    let data;
-    try {
-      data = await response.json();
-      console.log('📦 Response data:', data);
-    } catch (jsonError) {
-      console.error('❌ JSON parsing error:', jsonError);
-      const textResponse = await response.text();
-      console.error('📄 Raw response:', textResponse);
-      throw new Error('Invalid JSON response from server');
-    }
-    
     if (!response.ok) {
-      console.error('❌ Response not ok:', data);
-      throw new Error(data.message || data.error || `HTTP ${response.status}: ${response.statusText}`);
+      throw new Error(data.error || data.message || `HTTP error! status: ${response.status}`);
     }
-    
-    console.log('✅ Success response:', data);
-    return {
-      success: true,
-      data: data.data || [],
-      count: data.count || 0
-    };
+
+    return { success: true, data, status: response.status };
     
   } catch (error) {
-    console.error('❌ Tax history fetch error:', error);
-    console.error('❌ Error stack:', error.stack);
-    return {
-      success: false,
-      message: error.message || 'Failed to fetch tax history',
-      data: []
-    };
+    console.error(`❌ API Error: ${endpoint}`, error);
+    return { success: false, error: error.message, data: null };
   }
 };
 
-// Submit Feedback API
+// Authentication API
+export const authAPI = {
+  // Login user
+  login: async (credentials) => {
+    return await apiCall('login/', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  },
+
+  // Register user
+  register: async (userData) => {
+    return await apiCall('register/', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  },
+
+  // Test debug endpoint
+  debug: async () => {
+    return await apiCall('debug/');
+  },
+
+  // Logout (clear local storage)
+  logout: () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('user_id');
+    window.location.href = '/login';
+  },
+};
+
+// Data API
+export const dataAPI = {
+  // Get tax history
+  getTaxHistory: async (filters = {}) => {
+    const queryParams = new URLSearchParams(filters).toString();
+    const endpoint = queryParams ? `tax-history/?${queryParams}` : 'tax-history/';
+    return await apiCall(endpoint);
+  },
+
+  // Get dashboard data
+  getDashboard: async (type = 'vendor') => {
+    const endpoint = type === 'admin' ? 'admin-dashboard/' : 'vendor-dashboard/';
+    return await apiCall(endpoint);
+  },
+};
+
+// Utility functions
+export const apiUtils = {
+  // Check if user is authenticated
+  isAuthenticated: () => {
+    return !!localStorage.getItem('access_token');
+  },
+
+  // Get current user info
+  getCurrentUser: () => {
+    return {
+      username: localStorage.getItem('username'),
+      role: localStorage.getItem('user_role'),
+      id: localStorage.getItem('user_id'),
+    };
+  },
+
+  // Test API connection
+  testConnection: async () => {
+    try {
+      const result = await authAPI.debug();
+      console.log('🔍 API Connection Test:', result);
+      return result.success;
+    } catch (error) {
+      console.error('❌ API Connection Failed:', error);
+      return false;
+    }
+  },
+  
+};
+
 export const submitFeedback = async (subject, message) => {
   console.log('🔍 submitFeedback called');
   try {
@@ -112,28 +155,4 @@ export const submitFeedback = async (subject, message) => {
   }
 };
 
-// Simple test function to check if API is reachable
-export const testApiConnection = async () => {
-  console.log('🔍 Testing API connection...');
-  try {
-    const response = await fetch(`${API_BASE_URL}/`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    console.log('📨 Test response status:', response.status);
-    return {
-      success: response.ok,
-      status: response.status,
-      statusText: response.statusText
-    };
-  } catch (error) {
-    console.error('❌ API connection test failed:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
+export default { authAPI, dataAPI, apiUtils };
