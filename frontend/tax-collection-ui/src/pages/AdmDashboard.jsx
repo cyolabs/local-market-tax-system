@@ -32,7 +32,7 @@ import {
 } from "recharts";
 
 const initialUsers = [
-   {
+     {
     id: 1,
     full_name: "Tax Api",
     email: "taxapi@gmail.com",
@@ -364,7 +364,6 @@ const initialFeedback = [
     subject: "Payment Process",
     message: "The payment process is very smooth and user-friendly. Thank you for making it so easy to pay our taxes!",
     status: "Read",
-    created_at: "2025-07-28T10:30:00Z",
     created_at: "2025-07-28T10:30:00Z",
     priority: "Low"
   },
@@ -1586,7 +1585,7 @@ const downloadReport = (reportType) => {
               </div>
               <div className="d-flex justify-content-between mb-2">
                 <span>Today's Revenue:</span>
-                <strong className="text-success">KES {(stats.totalRevenue * 0.1).toLocaleString()}</strong>
+                <strong className="text-success">KES {(stats.totalRevenue * 1).toLocaleString()}</strong>
               </div>
               <div className="d-flex justify-content-between mb-2">
                 <span>Pending Items:</span>
