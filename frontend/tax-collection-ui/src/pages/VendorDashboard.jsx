@@ -138,33 +138,198 @@ const VendorDashboard = () => {
     }
   };
 
-  const fetchTransactions = async (filters = {}) => {
+// Add this to the top of your VendorDashboard.jsx file - Updated fetchTransactions function
+
+const fetchTransactions = async (filters = {}) => {
+  try {
+    setLoading(true);
+    setError(null);
+    
+    console.log('=== TRANSACTION FETCH DEBUG ===');
+    console.log('Fetching transactions with filters:', filters);
+    console.log('Current API Base URL:', process.env.REACT_APP_API_URL);
+    console.log('================================');
+    
+    // First, test API connectivity
     try {
-      setLoading(true);
-      setError(null);
-      
-      // Try to get from your tax_api first
+      const connectivityTest = await testApiConnectivity();
+      console.log('API Connectivity Test:', connectivityTest);
+      if (!connectivityTest.success) {
+        throw new Error(`API connectivity failed: ${connectivityTest.message}`);
+      }
+    } catch (connectivityError) {
+      console.error('Connectivity test failed:', connectivityError);
+      // Continue anyway, maybe it will work
+    }
+    
+    let transactionsFound = false;
+    let lastError = null;
+    
+    // Try to get from your tax_api first
+    try {
+      console.log('Attempting to fetch from Tax API...');
       const response = await getTaxHistory(filters);
       console.log('Tax History Response:', response);
       
-      if (response.success && response.data && response.data.length > 0) {
-        setTransactions(response.data);
-      } else {
-        // Fallback to M-Pesa service if tax_api returns empty
-        const mpesaResponse = await getPaymentTransactions();
-        if (mpesaResponse.success) {
-          setTransactions(mpesaResponse.data || []);
+      if (response && response.success && response.data) {
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          console.log('✅ Tax API returned data:', response.data.length, 'transactions');
+          setTransactions(response.data);
+          transactionsFound = true;
+          return; // Exit early if we got data
         } else {
-          setError(response.message || mpesaResponse.message || "No transactions found");
+          console.log('⚠️ Tax API returned empty data array');
+          lastError = 'Tax API returned no transactions';
         }
+      } else {
+        console.log('❌ Tax API response not successful:', response);
+        lastError = response?.message || 'Tax API failed';
       }
-    } catch (err) {
-      console.error("Unexpected error:", err);
-      setError("An unexpected error occurred while fetching transactions");
-    } finally {
-      setLoading(false);
+    } catch (taxApiError) {
+      console.error('❌ Tax API error:', taxApiError);
+      lastError = `Tax API error: ${taxApiError.message}`;
+    }
+    
+    // If tax API didn't return data, try M-Pesa service
+    if (!transactionsFound) {
+      try {
+        console.log('Attempting to fetch from M-Pesa service...');
+        const mpesaResponse = await getPaymentTransactions();
+        console.log('M-Pesa Response:', mpesaResponse);
+        
+        if (mpesaResponse && mpesaResponse.success) {
+          const transactions = mpesaResponse.data || [];
+          console.log('✅ M-Pesa service returned:', transactions.length, 'transactions');
+          setTransactions(transactions);
+          transactionsFound = true;
+          
+          if (transactions.length === 0) {
+            setError("No transactions found in M-Pesa service");
+          }
+        } else {
+          console.log('❌ M-Pesa service failed:', mpesaResponse);
+          lastError = `M-Pesa service failed: ${mpesaResponse?.message || 'Unknown error'}`;
+        }
+      } catch (mpesaError) {
+        console.error('❌ M-Pesa service error:', mpesaError);
+        lastError = `M-Pesa service error: ${mpesaError.message}`;
+      }
+    }
+    
+    // If neither service returned data, show appropriate error
+    if (!transactionsFound) {
+      console.log('❌ No transactions found from any source');
+      setTransactions([]);
+      
+      if (lastError) {
+        setError(`Failed to load transactions: ${lastError}`);
+      } else {
+        setError("No transaction data available from any source");
+      }
+    }
+    
+  } catch (err) {
+    console.error("❌ Unexpected error in fetchTransactions:", err);
+    console.error("Error stack:", err.stack);
+    
+    // More specific error messages based on error type
+    let errorMessage = "An unexpected error occurred while fetching transactions";
+    
+    if (err.name === 'TypeError') {
+      if (err.message.includes('fetch')) {
+        errorMessage = "Network error: Unable to connect to the server. Please check your internet connection and try again.";
+      } else if (err.message.includes('JSON')) {
+        errorMessage = "Server response error: Invalid data format received from server.";
+      } else {
+        errorMessage = `Type error: ${err.message}`;
+      }
+    } else if (err.name === 'SyntaxError') {
+      errorMessage = "Server response error: Invalid JSON data received.";
+    } else if (err.message.includes('CORS')) {
+      errorMessage = "Cross-origin error: Server configuration issue. Please contact support.";
+    } else if (err.message.includes('timeout')) {
+      errorMessage = "Request timeout: Server took too long to respond.";
+    } else if (err.message.includes('404')) {
+      errorMessage = "API endpoint not found. Please check if the server is running correctly.";
+    } else if (err.message.includes('500')) {
+      errorMessage = "Server error: Internal server error occurred.";
+    } else {
+      errorMessage = `Error: ${err.message || 'Unknown error occurred'}`;
+    }
+    
+    setError(errorMessage);
+    setTransactions([]);
+  } finally {
+    setLoading(false);
+    console.log('=== TRANSACTION FETCH COMPLETE ===');
+  }
+};
+
+// Add this useEffect to test API on component mount
+useEffect(() => {
+  console.log('VendorDashboard mounted - Running diagnostics...');
+  
+  // Log environment info
+  console.log('Environment Info:', {
+    NODE_ENV: process.env.NODE_ENV,
+    REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+    currentOrigin: window.location.origin,
+    userAgent: navigator.userAgent
+  });
+  
+  // Test API connectivity when component mounts
+  const runDiagnostics = async () => {
+    try {
+      // Test API connectivity
+      const connectivityResult = await testApiConnectivity();
+      console.log('API connectivity test result:', connectivityResult);
+      
+      // Test M-Pesa endpoints
+      if (typeof debugMpesaEndpoints === 'function') {
+        await debugMpesaEndpoints();
+      }
+      
+      if (!connectivityResult.success) {
+        setError(`API connectivity issue: ${connectivityResult.message}`);
+      }
+    } catch (diagnosticError) {
+      console.error('Diagnostic error:', diagnosticError);
     }
   };
+  
+  runDiagnostics();
+}, []);
+
+// Enhanced useEffect for fetching transactions
+useEffect(() => {
+  console.log('Active section changed to:', activeSection);
+  if (activeSection === "tax-history") {
+    console.log('Fetching transactions for tax-history section...');
+    fetchTransactions();
+  }
+}, [activeSection]);
+
+// Add a debug button to the tax-history section (you can remove this later)
+// Add this right after the "Refresh" button in the tax-history section:
+
+<Button 
+  variant="outline-info" 
+  size="sm"
+  onClick={async () => {
+    console.log('Running manual diagnostics...');
+    try {
+      await testApiConnectivity();
+      if (typeof debugMpesaEndpoints === 'function') {
+        await debugMpesaEndpoints();
+      }
+    } catch (e) {
+      console.error('Manual diagnostic error:', e);
+    }
+  }}
+  className="ms-2"
+>
+  Debug API
+</Button>
 
   const handleFilterChange = () => {
     const filters = {};

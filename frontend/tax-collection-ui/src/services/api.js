@@ -1,72 +1,55 @@
 import axios from 'axios';
-import { getToken } from "./AuthService"
+import { getToken } from "./AuthService";
 
-export const submitFeedback = async (subject, message) => {
-  try {
-    const res = await axios.post(
-      "/api/feedback/",
-      { subject, message },
-      {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-        },
-      }
-    );
-    return res.data;
-  } catch (err) {
-    console.error("Feedback submit error:", err);
-    return { success: false, message: err.response?.data || "Error submitting feedback" };
-  }
-};
+// Single configuration for API base URL
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://local-market-tax-system-7fuw.onrender.com';
 
+console.log('API Base URL:', API_BASE_URL);
 
-
+// Configure axios defaults
 axios.defaults.withCredentials = true;
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
+// Create axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://local-market-tax-system-7fuw.onrender.com/api',
-  timeout: 10000,
+  baseURL: `${API_BASE_URL}/api`,
+  timeout: 30000, // Increased timeout for better reliability
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// Request interceptor
 api.interceptors.request.use((config) => { 
-  const token = localStorage.getItem('access_token');
+  const token = localStorage.getItem('access_token') || getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log('API Request:', config.method?.toUpperCase(), config.url);
   return config;
 });
 
-
+// Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response:', response.status, response.config.url);
+    return response;
+  },
   (error) => {
+    console.error('API Error:', error.response?.status, error.config?.url, error.message);
     if (error.response?.status === 401) {
       console.warn('Unauthorized - token may be expired');
-      // You can trigger a logout or token refresh here
+      // Handle token refresh or logout
     }
     return Promise.reject(error);
   }
 );
 
-// API functions
-export const registerUser = (userData) => api.post('/register/', userData);
-export const loginUser = (credentials) => api.post('/login/', credentials);
-export const getProtectedData = () => api.get('/protected-route/');
-
-// frontend/tax-collection-ui/src/services/api.js
-
-const API_BASE_URL = 'https://local-market-tax-system-7fuw.onrender.com/api';
-
-// Helper function to get auth token
+// Helper functions
 const getAuthToken = () => {
-  return localStorage.getItem('access_token');
+  return localStorage.getItem('access_token') || getToken();
 };
 
-// Helper function to get auth headers
 const getAuthHeaders = () => {
   const token = getAuthToken();
   return {
@@ -75,20 +58,23 @@ const getAuthHeaders = () => {
   };
 };
 
-// Helper function to handle API responses
 const handleResponse = async (response) => {
   const data = await response.json();
   
   if (!response.ok) {
-    throw new Error(data.message || data.error || 'Something went wrong');
+    throw new Error(data.message || data.error || data.detail || 'Something went wrong');
   }
   
   return data;
 };
 
-// Tax History API
+// =============================================================================
+// TAX HISTORY API - Fixed and improved
+// =============================================================================
 export const getTaxHistory = async (filters = {}) => {
   try {
+    console.log('getTaxHistory called with filters:', filters);
+    
     const queryParams = new URLSearchParams();
     
     // Add filters if provided
@@ -96,19 +82,38 @@ export const getTaxHistory = async (filters = {}) => {
     if (filters.start_date) queryParams.append('start_date', filters.start_date);
     if (filters.end_date) queryParams.append('end_date', filters.end_date);
     
-    const url = `${API_BASE_URL}/tax-history/${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const queryString = queryParams.toString();
+    const endpoint = `/tax-history/${queryString ? '?' + queryString : ''}`;
     
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
+    console.log('Fetching tax history from:', `${API_BASE_URL}/api${endpoint}`);
+    
+    // Try using axios first (more reliable)
+    try {
+      const response = await api.get(`/tax-history/${queryString ? '?' + queryString : ''}`);
+      console.log('Tax history axios response:', response.data);
+      
+      return {
+        success: true,
+        data: response.data.results || response.data.data || response.data || [],
+        count: response.data.count || 0
+      };
+    } catch (axiosError) {
+      console.warn('Axios failed, trying fetch:', axiosError.message);
+      
+      // Fallback to fetch
+      const url = `${API_BASE_URL}/api/tax-history/${queryString ? '?' + queryString : ''}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
 
-    const data = await handleResponse(response);
-    return {
-      success: true,
-      data: data.data || [],
-      count: data.count || 0
-    };
+      const data = await handleResponse(response);
+      return {
+        success: true,
+        data: data.results || data.data || data || [],
+        count: data.count || 0
+      };
+    }
   } catch (error) {
     console.error('Tax history fetch error:', error);
     return {
@@ -119,140 +124,92 @@ export const getTaxHistory = async (filters = {}) => {
   }
 };
 
-// Submit Feedback API
-// export const submitFeedback = async (subject, message) => {
-//   try {
-//     const response = await fetch(`${API_BASE_URL}/feedback/`, {
-//       method: 'POST',
-//       headers: getAuthHeaders(),
-//       body: JSON.stringify({
-//         subject,
-//         message
-//       }),
-//     });
-
-//     const data = await handleResponse(response);
-//     return {
-//       success: true,
-//       message: data.message || 'Feedback submitted successfully'
-//     };
-//   } catch (error) {
-//     console.error('Feedback submission error:', error);
-//     return {
-//       success: false,
-//       message: error.message || 'Failed to submit feedback'
-//     };
-//   }
-// };
-
-// Login API
-// export const loginUser = async (username, password) => {
-//   try {
-//     const response = await fetch(`${API_BASE_URL}/login/`, {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//       body: JSON.stringify({
-//         username,
-//         password
-//       }),
-//     });
-
-//     const data = await handleResponse(response);
+// =============================================================================
+// FEEDBACK API
+// =============================================================================
+export const submitFeedback = async (subject, message) => {
+  try {
+    console.log('Submitting feedback:', { subject, message });
     
-//     // Store tokens in localStorage
-//     if (data.access) {
-//       localStorage.setItem('access_token', data.access);
-//       localStorage.setItem('refresh_token', data.refresh);
-//       localStorage.setItem('user_role', data.role);
-//       localStorage.setItem('username', data.username);
-//     }
-    
-//     return {
-//       success: true,
-//       data
-//     };
-//   } catch (error) {
-//     console.error('Login error:', error);
-//     return {
-//       success: false,
-//       message: error.message || 'Login failed'
-//     };
-//   }
-// };
+    // Try axios first
+    try {
+      const response = await api.post('/feedback/', { subject, message });
+      return {
+        success: true,
+        message: response.data.message || 'Feedback submitted successfully'
+      };
+    } catch (axiosError) {
+      console.warn('Axios feedback failed, trying fetch:', axiosError.message);
+      
+      // Fallback to fetch
+      const response = await fetch(`${API_BASE_URL}/api/feedback/`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ subject, message }),
+      });
 
-// Register API
-// export const registerUser = async (userData) => {
-//   try {
-//     const response = await fetch(`${API_BASE_URL}/signup/`, {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//       body: JSON.stringify(userData),
-//     });
+      const data = await handleResponse(response);
+      return {
+        success: true,
+        message: data.message || 'Feedback submitted successfully'
+      };
+    }
+  } catch (error) {
+    console.error("Feedback submit error:", error);
+    return { 
+      success: false, 
+      message: error.response?.data?.message || error.message || "Error submitting feedback" 
+    };
+  }
+};
 
-//     const data = await handleResponse(response);
-//     return {
-//       success: true,
-//       data
-//     };
-//   } catch (error) {
-//     console.error('Registration error:', error);
-//     return {
-//       success: false,
-//       message: error.message || 'Registration failed'
-//     };
-//   }
-// };
-
-// Create M-Pesa Payment Transaction
+// =============================================================================
+// M-PESA PAYMENT APIs
+// =============================================================================
 export const createMpesaPayment = async (transactionData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/create-mpesa-payment/`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(transactionData),
-    });
-
-    const data = await handleResponse(response);
+    console.log('Creating M-Pesa payment:', transactionData);
+    
+    const response = await api.post('/create-mpesa-payment/', transactionData);
     return {
       success: true,
-      data
+      data: response.data
     };
   } catch (error) {
     console.error('Create M-Pesa payment error:', error);
     return {
       success: false,
-      message: error.message || 'Failed to create payment transaction'
+      message: error.response?.data?.message || error.message || 'Failed to create payment transaction'
     };
   }
 };
 
-// Get User Profile
+// =============================================================================
+// USER PROFILE APIs
+// =============================================================================
 export const getUserProfile = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/profile/`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
-
-    const data = await handleResponse(response);
+    const response = await api.get('/profile/');
     return {
       success: true,
-      data
+      data: response.data
     };
   } catch (error) {
     console.error('Get user profile error:', error);
     return {
       success: false,
-      message: error.message || 'Failed to fetch user profile'
+      message: error.response?.data?.message || error.message || 'Failed to fetch user profile'
     };
   }
 };
 
-// Refresh Token
+// =============================================================================
+// AUTHENTICATION APIs
+// =============================================================================
+export const registerUser = (userData) => api.post('/register/', userData);
+export const loginUser = (credentials) => api.post('/login/', credentials);
+export const getProtectedData = () => api.get('/protected-route/');
+
 export const refreshToken = async () => {
   try {
     const refresh = localStorage.getItem('refresh_token');
@@ -260,38 +217,29 @@ export const refreshToken = async () => {
       throw new Error('No refresh token available');
     }
 
-    const response = await fetch(`${API_BASE_URL}/token/refresh/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        refresh
-      }),
-    });
-
-    const data = await handleResponse(response);
+    const response = await api.post('/token/refresh/', { refresh });
     
-    if (data.access) {
-      localStorage.setItem('access_token', data.access);
+    if (response.data.access) {
+      localStorage.setItem('access_token', response.data.access);
     }
     
     return {
       success: true,
-      data
+      data: response.data
     };
   } catch (error) {
     console.error('Token refresh error:', error);
-    // Clear tokens if refresh fails
     logoutUser();
     return {
       success: false,
-      message: error.message || 'Token refresh failed'
+      message: error.response?.data?.message || error.message || 'Token refresh failed'
     };
   }
 };
 
-// Logout function
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
 export const logoutUser = () => {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
@@ -300,19 +248,67 @@ export const logoutUser = () => {
   window.location.href = '/login';
 };
 
-// Check if user is authenticated
 export const isAuthenticated = () => {
   return !!localStorage.getItem('access_token');
 };
 
-// Get user role
 export const getUserRole = () => {
   return localStorage.getItem('user_role');
 };
 
-// Get username
 export const getUsername = () => {
   return localStorage.getItem('username');
+};
+
+// =============================================================================
+// API HEALTH CHECK - for debugging
+// =============================================================================
+export const testApiConnectivity = async () => {
+  console.log('Testing API connectivity...');
+  console.log('Base URL:', API_BASE_URL);
+  console.log('Full API URL:', `${API_BASE_URL}/api`);
+  
+  try {
+    // Test basic connectivity - try multiple endpoints
+    const endpoints = [
+      '/health/',
+      '/tax-history/',
+      '/'
+    ];
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Testing endpoint: ${endpoint}`);
+        const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
+          method: 'GET',
+          headers: getAuthHeaders(),
+        });
+        
+        console.log(`Endpoint ${endpoint} - Status:`, response.status);
+        
+        if (response.ok || response.status === 401) { // 401 means endpoint exists but needs auth
+          return { 
+            success: true, 
+            message: `API is reachable via ${endpoint}`,
+            endpoint: endpoint,
+            status: response.status
+          };
+        }
+      } catch (endpointError) {
+        console.log(`Endpoint ${endpoint} failed:`, endpointError.message);
+        continue;
+      }
+    }
+    
+    throw new Error('All endpoints failed');
+  } catch (error) {
+    console.error('API connectivity test failed:', error);
+    return { 
+      success: false, 
+      message: `API connectivity failed: ${error.message}`,
+      url: `${API_BASE_URL}/api`
+    };
+  }
 };
 
 export default api;
