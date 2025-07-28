@@ -138,173 +138,33 @@ const VendorDashboard = () => {
     }
   };
 
- // Add this debug version of fetchTransactions to your VendorDashboard
-
-// Replace just the fetchTransactions function in your VendorDashboard.jsx
-
-const fetchTransactions = async (filters = {}) => {
-  console.log('🔍 fetchTransactions called with filters:', filters);
-  console.log('🔍 User:', user);
-  console.log('🔍 Auth token exists:', !!localStorage.getItem('access_token'));
-  
-  try {
-    setLoading(true);
-    setError(null);
-    
-    const API_BASE_URL = 'https://local-market-tax-system-7fuw.onrender.com/api';
-    const token = localStorage.getItem('access_token');
-    
-    console.log('📍 Making request to:', `${API_BASE_URL}/tax-history/`);
-    console.log('📋 Token available:', token ? 'Yes' : 'No');
-    
-    // Build query string from filters
-    const queryParams = new URLSearchParams();
-    if (filters.status) queryParams.append('status', filters.status);
-    if (filters.start_date) queryParams.append('start_date', filters.start_date);
-    if (filters.end_date) queryParams.append('end_date', filters.end_date);
-    
-    const url = `${API_BASE_URL}/tax-history/${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json', // Explicitly request JSON
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      },
-    });
-
-    console.log('📨 Response status:', response.status);
-    console.log('📨 Response ok:', response.ok);
-    console.log('📨 Content-Type:', response.headers.get('content-type'));
-
-    // Check if response is actually JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error('❌ Response is not JSON. Content-Type:', contentType);
-      
-      // Try to read the response as text to see what we got
-      const text = await response.text();
-      console.error('❌ Response text:', text.substring(0, 500));
-      
-      // Special handling for common scenarios
-      if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
-        throw new Error('Server returned HTML instead of JSON. This might be an error page or login page.');
-      }
-      
-      throw new Error(`Server returned non-JSON response: ${contentType || 'unknown content type'}`);
-    }
-
-    // Now we know it's JSON, let's parse it
-    const responseText = await response.text();
-    console.log('📄 Raw response length:', responseText.length);
-    
-    // Handle empty responses
-    if (!responseText || responseText.trim() === '') {
-      console.warn('⚠️ Empty response received');
-      setTransactions([]);
-      return;
-    }
-
-    let data;
+  const fetchTransactions = async (filters = {}) => {
     try {
-      data = JSON.parse(responseText);
-      console.log('📦 Parsed data:', data);
-    } catch (parseError) {
-      console.error('❌ JSON parse error:', parseError);
-      console.error('❌ Response text preview:', responseText.substring(0, 200));
-      throw new Error(`Invalid JSON response: ${parseError.message}`);
-    }
-
-    // Handle various response formats
-    if (!response.ok) {
-      console.error('❌ Response not ok:', response.status, data);
+      setLoading(true);
+      setError(null);
       
-      // Handle specific HTTP status codes
-      if (response.status === 401) {
-        // Clear invalid token
-        localStorage.removeItem('access_token');
-        throw new Error('Session expired. Please login again.');
-      } else if (response.status === 403) {
-        throw new Error('You do not have permission to view this data.');
-      } else if (response.status === 404) {
-        throw new Error('The requested resource was not found.');
-      } else if (response.status >= 500) {
-        throw new Error('Server error. Please try again later.');
+      // Try to get from your tax_api first
+      const response = await getTaxHistory(filters);
+      console.log('Tax History Response:', response);
+      
+      if (response.success && response.data && response.data.length > 0) {
+        setTransactions(response.data);
+      } else {
+        // Fallback to M-Pesa service if tax_api returns empty
+        const mpesaResponse = await getPaymentTransactions();
+        if (mpesaResponse.success) {
+          setTransactions(mpesaResponse.data || []);
+        } else {
+          setError(response.message || mpesaResponse.message || "No transactions found");
+        }
       }
-      
-      // Use error message from server if available
-      const errorMessage = data?.message || data?.error || data?.detail || `HTTP ${response.status}: ${response.statusText}`;
-      throw new Error(errorMessage);
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      setError("An unexpected error occurred while fetching transactions");
+    } finally {
+      setLoading(false);
     }
-
-    // Handle successful response
-    // Check for different possible response structures
-    let transactionData = [];
-    
-    if (data.success === true && data.data) {
-      // Format: { success: true, data: [...] }
-      transactionData = Array.isArray(data.data) ? data.data : [];
-    } else if (data.success === false) {
-      // Format: { success: false, message: "..." }
-      throw new Error(data.message || 'Server indicated failure');
-    } else if (Array.isArray(data)) {
-      // Format: Direct array response
-      transactionData = data;
-    } else if (data.results && Array.isArray(data.results)) {
-      // Format: { results: [...], count: X, next: "...", previous: "..." }
-      transactionData = data.results;
-    } else if (data.transactions && Array.isArray(data.transactions)) {
-      // Format: { transactions: [...] }
-      transactionData = data.transactions;
-    } else {
-      console.warn('⚠️ Unexpected response structure:', data);
-      // If we can't find the data, assume empty
-      transactionData = [];
-    }
-    
-    console.log('✅ Transaction data extracted:', transactionData.length, 'items');
-    setTransactions(transactionData);
-    
-    if (transactionData.length > 0) {
-      setSuccess(`Loaded ${transactionData.length} transaction${transactionData.length !== 1 ? 's' : ''} successfully`);
-      setTimeout(() => setSuccess(null), 3000);
-    } else {
-      console.log('ℹ️ No transactions found');
-    }
-    
-  } catch (err) {
-    console.error("❌ Fetch error:", err);
-    console.error("❌ Error details:", {
-      name: err.name,
-      message: err.message,
-      stack: err.stack
-    });
-    
-    // User-friendly error messages
-    let errorMessage = "Failed to load transactions";
-    
-    if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-      errorMessage = "Unable to connect to server. Please check your internet connection.";
-    } else if (err.message.includes('NetworkError')) {
-      errorMessage = "Network error. Please check your connection and try again.";
-    } else if (err.message.includes('Session expired')) {
-      errorMessage = err.message;
-      // Optionally redirect to login
-      // setTimeout(() => window.location.href = '/login', 2000);
-    } else if (err.message) {
-      errorMessage = err.message;
-    }
-    
-    setError(errorMessage);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
-
+  };
 
   const handleFilterChange = () => {
     const filters = {};
