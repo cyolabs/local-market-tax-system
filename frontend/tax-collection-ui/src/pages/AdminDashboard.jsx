@@ -33,56 +33,73 @@ import {
 
 // Mock data
 const initialUsers = [
+   {
+    id: 1,
+    full_name: "Tax Api",
+    email: "taxapi@gmail.com",
+    phone: "254709023456",
+    business_type: "Fresh products trader",
+    status: "Active",
+    created_at: "2025-07-15T10:30:00Z",
+    last_login: "2025-07-28T14:20:00Z"
+  },
   {
     id: 1,
     full_name: "John Doe",
-    email: "john@example.com",
+    email: "john@gmail.com",
     phone: "254700123456",
     business_type: "Fresh products trader",
     status: "Active",
-    created_at: "2024-01-15T10:30:00Z",
-    last_login: "2024-07-28T14:20:00Z"
+    created_at: "2025-07-15T10:30:00Z",
+    last_login: "2025-07-28T14:20:00Z"
   },
   {
     id: 2,
     full_name: "Mary Smith",
-    email: "mary@example.com",
+    email: "mary@gmail.com",
     phone: "254700123457",
     business_type: "Livestock and meat",
     status: "Active",
-    created_at: "2024-02-20T09:15:00Z",
-    last_login: "2024-07-27T16:45:00Z"
+    created_at: "2025-07-20T09:15:00Z",
+    last_login: "2025-07-27T16:45:00Z"
   },
   {
     id: 3,
     full_name: "Peter Johnson",
-    email: "peter@example.com",
+    email: "peter@gmail.com",
     phone: "254700123458",
     business_type: "Fish vendor",
     status: "Inactive",
-    created_at: "2024-03-10T11:00:00Z",
-    last_login: "2024-07-20T12:30:00Z"
+    created_at: "2025-07-10T11:00:00Z",
+    last_login: "2025-07-20T12:30:00Z"
   },
   {
     id: 4,
     full_name: "Alice Brown",
-    email: "alice@example.com",
+    email: "alice@gmail.com",
     phone: "254700123459",
     business_type: "Clothes and textile",
     status: "Active",
-    created_at: "2024-04-05T08:45:00Z",
-    last_login: "2024-07-28T13:15:00Z"
+    created_at: "2025-07-05T08:45:00Z",
+    last_login: "2025-07-28T13:15:00Z"
   },
   {
     id: 5,
     full_name: "David Wilson",
-    email: "david@example.com",
+    email: "david@gmail.com",
     phone: "254700123460",
     business_type: "Household goods",
     status: "Active",
-    created_at: "2024-05-12T15:20:00Z",
-    last_login: "2024-07-26T10:10:00Z"
+    created_at: "2025-05-12T15:20:00Z",
+    last_login: "2025-07-26T10:10:00Z"
   }
+];
+
+const reportTypes = [
+  { id: 1, name: "User Registration Report", type: "users" },
+  { id: 2, name: "Transaction Summary Report", type: "transactions" },
+  { id: 3, name: "Revenue Analysis Report", type: "revenue" },
+  { id: 4, name: "Feedback Summary Report", type: "feedback" },
 ];
 const testApiConnectivity = async () => {
   try {
@@ -106,9 +123,9 @@ const initialTransactions = [
     phone: "254700123456",
     mpesa_code: "QGH7XY8Z9A",
     status: "Completed",
-    created_at: "2024-07-28T10:30:00Z",
+    created_at: "2025-07-28T10:30:00Z",
     receipt_number: "RCP001",
-    checkout_id: "ws_CO_280720241030001"
+    checkout_id: "ws_CO_280720251030001"
   },
   {
     id: 2,
@@ -119,9 +136,9 @@ const initialTransactions = [
     phone: "254700123457",
     mpesa_code: "BGH7XY8Z9B",
     status: "Completed",
-    created_at: "2024-07-27T14:20:00Z",
+    created_at: "2025-07-27T14:20:00Z",
     receipt_number: "RCP002",
-    checkout_id: "ws_CO_270720241420002"
+    checkout_id: "ws_CO_270720251420002"
   },
   {
     id: 3,
@@ -132,9 +149,9 @@ const initialTransactions = [
     phone: "254700123458",
     mpesa_code: "CGH7XY8Z9C",
     status: "Failed",
-    created_at: "2024-07-26T16:45:00Z",
+    created_at: "2025-07-26T16:45:00Z",
     receipt_number: "RCP003",
-    checkout_id: "ws_CO_260720241645003"
+    checkout_id: "ws_CO_260720251645003"
   },
   {
     id: 4,
@@ -145,9 +162,9 @@ const initialTransactions = [
     phone: "254700123459",
     mpesa_code: "DGH7XY8Z9D",
     status: "Pending",
-    created_at: "2024-07-25T11:30:00Z",
+    created_at: "2025-07-25T11:30:00Z",
     receipt_number: "RCP004",
-    checkout_id: "ws_CO_250720241130004"
+    checkout_id: "ws_CO_250720251130004"
   },
   {
     id: 5,
@@ -158,9 +175,9 @@ const initialTransactions = [
     phone: "254700123456",
     mpesa_code: "EGH7XY8Z9E",
     status: "Completed",
-    created_at: "2024-07-24T09:15:00Z",
+    created_at: "2025-07-24T09:15:00Z",
     receipt_number: "RCP005",
-    checkout_id: "ws_CO_240720240915005"
+    checkout_id: "ws_CO_240720250915005"
   },
   {
     id: 6,
@@ -171,9 +188,9 @@ const initialTransactions = [
     phone: "254700123460",
     mpesa_code: "FGH7XY8Z9F",
     status: "Completed",
-    created_at: "2024-07-23T13:45:00Z",
+    created_at: "2025-07-23T13:45:00Z",
     receipt_number: "RCP006",
-    checkout_id: "ws_CO_230720241345006"
+    checkout_id: "ws_CO_230720251345006"
   }
 ];
 
@@ -185,7 +202,7 @@ const initialFeedback = [
     subject: "Payment Process",
     message: "The payment process is very smooth and user-friendly. Thank you for making it so easy to pay our taxes!",
     status: "Read",
-    created_at: "2024-07-28T10:30:00Z",
+    created_at: "2025-07-28T10:30:00Z",
     priority: "Low"
   },
   {
@@ -436,8 +453,67 @@ const AdminDashboard = () => {
     pendingTransactions: transactions.filter(t => t.status === "Pending").length,
     failedTransactions: transactions.filter(t => t.status === "Failed").length,
     unreadFeedback: feedback.filter(f => f.status === "Unread").length,
-    highPriorityFeedback: feedback.filter(f => f.priority === "High").length
+    highPriorityFeedback: feedback.filter(f => f.priority === "High").length,
+    availableReports: reportTypes.length,
+    lastReportDownload: "2024-07-28"
   };
+
+  const generateMockReport = (reportType) => {
+  let csvContent = "";
+  
+  switch(reportType) {
+    case "users":
+      csvContent = "ID,Full Name,Email,Phone,Business Type,Status,Created At,Last Login\n";
+      users.forEach(user => {
+        csvContent += `${user.id},"${user.full_name}","${user.email}","${user.phone}","${user.business_type}","${user.status}","${user.created_at}","${user.last_login}"\n`;
+      });
+      break;
+      
+    case "transactions":
+      csvContent = "ID,User Name,Amount,Category,Phone,Status,M-Pesa Code,Date,Receipt Number\n";
+      transactions.forEach(txn => {
+        csvContent += `${txn.id},"${txn.user_name}",${txn.amount},"${txn.category}","${txn.phone}","${txn.status}","${txn.mpesa_code}","${txn.created_at}","${txn.receipt_number}"\n`;
+      });
+      break;
+      
+    case "revenue":
+      csvContent = "Month,Revenue,Transactions,Users\n";
+      revenueData.forEach(item => {
+        csvContent += `${item.month},${item.revenue},${item.transactions},${item.users}\n`;
+      });
+      break;
+      
+    case "feedback":
+      csvContent = "ID,User Name,Subject,Message,Status,Priority,Created At\n";
+      feedback.forEach(fb => {
+        csvContent += `${fb.id},"${fb.user_name}","${fb.subject}","${fb.message.replace(/"/g, '""')}","${fb.status}","${fb.priority}","${fb.created_at}"\n`;
+      });
+      break;
+      
+  }
+  
+  return csvContent;
+};
+
+const downloadReport = (reportType) => {
+  setLoading(true);
+  
+  setTimeout(() => {
+    const csvContent = generateMockReport(reportType);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${reportType}_report_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setLoading(false);
+    showAlert(`${reportType} report downloaded successfully`);
+  }, 1500);
+};
 
     const renderContent = () => {
     switch (activeSection) {
@@ -1068,6 +1144,103 @@ const AdminDashboard = () => {
             )}
           </>
         );
+      
+        case "reports":
+  return (
+    <>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h4 className="mb-0">Report Generation</h4>
+        <div>
+          <Badge bg="info" className="me-2">
+            CSV Format
+          </Badge>
+        </div>
+      </div>
+
+      <Card>
+        <Card.Body>
+          <h5 className="mb-4">Available Reports</h5>
+          <Row>
+            {reportTypes.map(report => (
+              <Col md={6} key={report.id} className="mb-4">
+                <Card className="h-100">
+                  <Card.Body>
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div>
+                        <Card.Title>{report.name}</Card.Title>
+                        <Card.Text className="text-muted small">
+                          Contains all {report.type} data in CSV format
+                        </Card.Text>
+                      </div>
+                      <Button 
+                        variant="outline-primary"
+                        onClick={() => downloadReport(report.type)}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <Spinner as="span" animation="border" size="sm" />
+                        ) : (
+                          'Download'
+                        )}
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </Card.Body>
+      </Card>
+
+      <Card className="mt-4">
+        <Card.Body>
+          <h5 className="mb-3">Custom Report</h5>
+          <Form>
+            <Row>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Report Type</Form.Label>
+                  <Form.Select>
+                    <option>Select report type</option>
+                    <option>Custom User Report</option>
+                    <option>Custom Transaction Report</option>
+                    <option>Custom Feedback Report</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Date Range</Form.Label>
+                  <Form.Select>
+                    <option>Select date range</option>
+                    <option>Last 7 days</option>
+                    <option>Last 30 days</option>
+                    <option>Last quarter</option>
+                    <option>Custom range</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Format</Form.Label>
+                  <Form.Select>
+                    <option>CSV</option>
+                    <option disabled>PDF (coming soon)</option>
+                    <option disabled>Excel (coming soon)</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+            <div className="d-flex justify-content-end">
+              <Button variant="primary" disabled>
+                Generate Custom Report
+              </Button>
+            </div>
+          </Form>
+        </Card.Body>
+      </Card>
+    </>
+  );
 
       default:
         return (
@@ -1136,6 +1309,14 @@ const AdminDashboard = () => {
           >
             Feedback
           </Button>
+          // Add this with the other mobile navigation buttons
+<Button
+  size="sm"
+  variant={activeSection === "reports" ? "secondary" : "light"}
+  onClick={() => setActiveSection("reports")}
+>
+  Reports
+</Button>
         </div>
       </div>
 
@@ -1222,6 +1403,15 @@ const AdminDashboard = () => {
               )}
             </ListGroup.Item>
           </ListGroup>
+<ListGroup.Item
+  action
+  active={activeSection === "reports"}
+  onClick={() => setActiveSection("reports")}
+  className="d-flex justify-content-between align-items-center"
+>
+  📊 Reports
+  <Badge bg="info" pill>New</Badge>
+</ListGroup.Item>
 
           {/* Quick Stats in Sidebar */}
           <div className="mt-4 pt-4 border-top">
@@ -1239,6 +1429,16 @@ const AdminDashboard = () => {
                 <span>Pending Items:</span>
                 <strong className="text-warning">{stats.pendingTransactions + stats.unreadFeedback}</strong>
               </div>
+              <div className="mt-4 pt-4 border-top">
+  <h6 className="text-muted">Quick Stats</h6>
+  <div className="small">
+    {/* ... your existing quick stats */}
+    <div className="d-flex justify-content-between mb-2">
+      <span>Available Reports:</span>
+      <strong className="text-info">{stats.availableReports}</strong>
+    </div>
+  </div>
+</div>
             </div>
           </div>
         </div>
