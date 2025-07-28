@@ -142,10 +142,9 @@ const VendorDashboard = () => {
 
 // Replace just the fetchTransactions function in your VendorDashboard.jsx
 
+// Replace your fetchTransactions function with this improved version
 const fetchTransactions = async (filters = {}) => {
   console.log('🔍 fetchTransactions called with filters:', filters);
-  console.log('🔍 User:', user);
-  console.log('🔍 Auth token exists:', !!localStorage.getItem('access_token'));
   
   try {
     setLoading(true);
@@ -154,9 +153,6 @@ const fetchTransactions = async (filters = {}) => {
     const API_BASE_URL = 'https://local-market-tax-system-7fuw.onrender.com/api';
     const token = localStorage.getItem('access_token');
     
-    console.log('📍 Making request to:', `${API_BASE_URL}/tax-history/`);
-    console.log('📋 Token available:', token ? 'Yes' : 'No');
-    
     // Build query string from filters
     const queryParams = new URLSearchParams();
     if (filters.status) queryParams.append('status', filters.status);
@@ -164,134 +160,119 @@ const fetchTransactions = async (filters = {}) => {
     if (filters.end_date) queryParams.append('end_date', filters.end_date);
     
     const url = `${API_BASE_URL}/tax-history/${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    console.log('📍 Making request to:', url);
     
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json', // Explicitly request JSON
+        'Accept': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` })
       },
     });
 
     console.log('📨 Response status:', response.status);
-    console.log('📨 Response ok:', response.ok);
-    console.log('📨 Content-Type:', response.headers.get('content-type'));
+    console.log('📨 Response headers:', Object.fromEntries(response.headers.entries()));
 
-    // Check if response is actually JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error('❌ Response is not JSON. Content-Type:', contentType);
-      
-      // Try to read the response as text to see what we got
-      const text = await response.text();
-      console.error('❌ Response text:', text.substring(0, 500));
-      
-      // Special handling for common scenarios
-      if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
-        throw new Error('Server returned HTML instead of JSON. This might be an error page or login page.');
-      }
-      
-      throw new Error(`Server returned non-JSON response: ${contentType || 'unknown content type'}`);
-    }
-
-    // Now we know it's JSON, let's parse it
+    // First, let's see what we actually got
     const responseText = await response.text();
-    console.log('📄 Raw response length:', responseText.length);
-    
-    // Handle empty responses
-    if (!responseText || responseText.trim() === '') {
-      console.warn('⚠️ Empty response received');
-      setTransactions([]);
-      return;
+    console.log('📄 Raw response:', responseText.substring(0, 500));
+
+    // Check if it's actually an HTML error page (common Django issue)
+    if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
+      console.error('❌ Received HTML instead of JSON - likely a 404 or error page');
+      
+      // Try to extract error information from HTML
+      const titleMatch = responseText.match(/<title>(.*?)<\/title>/i);
+      const errorTitle = titleMatch ? titleMatch[1] : 'Unknown error';
+      
+      if (responseText.includes('404') || errorTitle.includes('404')) {
+        throw new Error('API endpoint not found. Please check if the backend server is running and the URL is correct.');
+      } else if (responseText.includes('500') || errorTitle.includes('500')) {
+        throw new Error('Server error occurred. Please try again later.');
+      } else {
+        throw new Error(`Server returned an error page: ${errorTitle}`);
+      }
     }
 
+    // Check for plain text errors
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/plain')) {
+      console.error('❌ Received plain text instead of JSON');
+      
+      // If it's a short plain text response, it might be an error message
+      if (responseText.length < 200) {
+        throw new Error(`Server error: ${responseText}`);
+      } else {
+        throw new Error('Server returned plain text instead of JSON. This usually means the API endpoint is not configured correctly.');
+      }
+    }
+
+    // Now try to parse as JSON
     let data;
     try {
       data = JSON.parse(responseText);
-      console.log('📦 Parsed data:', data);
     } catch (parseError) {
       console.error('❌ JSON parse error:', parseError);
-      console.error('❌ Response text preview:', responseText.substring(0, 200));
-      throw new Error(`Invalid JSON response: ${parseError.message}`);
+      console.error('❌ Response preview:', responseText.substring(0, 200));
+      
+      // If parse fails, show a helpful error
+      throw new Error('Server returned invalid JSON. This usually means there\'s an error in the backend API.');
     }
 
-    // Handle various response formats
+    // Handle HTTP errors with JSON response
     if (!response.ok) {
-      console.error('❌ Response not ok:', response.status, data);
+      console.error('❌ HTTP error with JSON response:', data);
       
-      // Handle specific HTTP status codes
       if (response.status === 401) {
-        // Clear invalid token
         localStorage.removeItem('access_token');
         throw new Error('Session expired. Please login again.');
       } else if (response.status === 403) {
         throw new Error('You do not have permission to view this data.');
       } else if (response.status === 404) {
-        throw new Error('The requested resource was not found.');
-      } else if (response.status >= 500) {
-        throw new Error('Server error. Please try again later.');
+        throw new Error('Tax history endpoint not found. Please contact support.');
       }
       
-      // Use error message from server if available
-      const errorMessage = data?.message || data?.error || data?.detail || `HTTP ${response.status}: ${response.statusText}`;
+      const errorMessage = data?.message || data?.error || data?.detail || `HTTP ${response.status}`;
       throw new Error(errorMessage);
     }
 
-    // Handle successful response
-    // Check for different possible response structures
+    // Handle successful response - extract transaction data
     let transactionData = [];
     
     if (data.success === true && data.data) {
-      // Format: { success: true, data: [...] }
       transactionData = Array.isArray(data.data) ? data.data : [];
     } else if (data.success === false) {
-      // Format: { success: false, message: "..." }
       throw new Error(data.message || 'Server indicated failure');
     } else if (Array.isArray(data)) {
-      // Format: Direct array response
       transactionData = data;
     } else if (data.results && Array.isArray(data.results)) {
-      // Format: { results: [...], count: X, next: "...", previous: "..." }
       transactionData = data.results;
     } else if (data.transactions && Array.isArray(data.transactions)) {
-      // Format: { transactions: [...] }
       transactionData = data.transactions;
     } else {
       console.warn('⚠️ Unexpected response structure:', data);
-      // If we can't find the data, assume empty
       transactionData = [];
     }
     
-    console.log('✅ Transaction data extracted:', transactionData.length, 'items');
+    console.log('✅ Successfully loaded transactions:', transactionData.length);
     setTransactions(transactionData);
     
     if (transactionData.length > 0) {
-      setSuccess(`Loaded ${transactionData.length} transaction${transactionData.length !== 1 ? 's' : ''} successfully`);
+      setSuccess(`Loaded ${transactionData.length} transaction${transactionData.length !== 1 ? 's' : ''}`);
       setTimeout(() => setSuccess(null), 3000);
-    } else {
-      console.log('ℹ️ No transactions found');
     }
     
   } catch (err) {
     console.error("❌ Fetch error:", err);
-    console.error("❌ Error details:", {
-      name: err.name,
-      message: err.message,
-      stack: err.stack
-    });
     
     // User-friendly error messages
     let errorMessage = "Failed to load transactions";
     
     if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-      errorMessage = "Unable to connect to server. Please check your internet connection.";
+      errorMessage = "Cannot connect to server. Please check if the backend is running.";
     } else if (err.message.includes('NetworkError')) {
-      errorMessage = "Network error. Please check your connection and try again.";
-    } else if (err.message.includes('Session expired')) {
-      errorMessage = err.message;
-      // Optionally redirect to login
-      // setTimeout(() => window.location.href = '/login', 2000);
+      errorMessage = "Network error. Please check your internet connection.";
     } else if (err.message) {
       errorMessage = err.message;
     }
@@ -301,8 +282,6 @@ const fetchTransactions = async (filters = {}) => {
     setLoading(false);
   }
 };
-
-
 
 
 
