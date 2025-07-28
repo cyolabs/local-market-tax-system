@@ -31,59 +31,129 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-// Mock data
 const initialUsers = [
   {
     id: 1,
-    full_name: "John Doe",
-    email: "john@example.com",
-    phone: "254700123456",
-    business_type: "Fresh products trader",
+    full_name: "Rylee Meyers",
+    email: "qohexi@mailinator.com",
+    phone: "11303556666",
+    business_type: "other",
     status: "Active",
-    created_at: "2024-01-15T10:30:00Z",
-    last_login: "2024-07-28T14:20:00Z"
+    created_at: "2025-07-27T16:56:42.399646Z",
+    last_login: "2025-07-27T16:56:39.705151Z"
   },
   {
     id: 2,
-    full_name: "Mary Smith",
-    email: "mary@example.com",
-    phone: "254700123457",
-    business_type: "Livestock and meat",
+    full_name: "Debrah",
+    email: "Debrah@gmail.com",
+    phone: "35683935",
+    business_type: "wholesale",
     status: "Active",
-    created_at: "2024-02-20T09:15:00Z",
-    last_login: "2024-07-27T16:45:00Z"
+    created_at: "2025-07-27T17:11:55.012796Z",
+    last_login: "2025-07-27T17:11:53.158872Z"
   },
   {
     id: 3,
-    full_name: "Peter Johnson",
-    email: "peter@example.com",
-    phone: "254700123458",
-    business_type: "Fish vendor",
-    status: "Inactive",
-    created_at: "2024-03-10T11:00:00Z",
-    last_login: "2024-07-20T12:30:00Z"
+    full_name: "Ian kip",
+    email: "ian@gmail.com",
+    phone: "36374859855",
+    business_type: "wholesale",
+    status: "Active",
+    created_at: "2025-07-27T17:14:53.002337Z",
+    last_login: "2025-07-27T17:14:50.545723Z"
   },
   {
     id: 4,
-    full_name: "Alice Brown",
-    email: "alice@example.com",
-    phone: "254700123459",
-    business_type: "Clothes and textile",
+    full_name: "Destiny Kent",
+    email: "ruxynimy@mailinator.com",
+    phone: "56515111",
+    business_type: "retail",
     status: "Active",
-    created_at: "2024-04-05T08:45:00Z",
-    last_login: "2024-07-28T13:15:00Z"
+    created_at: "2025-07-27T17:23:04.005208Z",
+    last_login: "2025-07-27T17:23:01.724952Z"
   },
   {
     id: 5,
-    full_name: "David Wilson",
-    email: "david@example.com",
-    phone: "254700123460",
-    business_type: "Household goods",
+    full_name: "Tana Stuart",
+    email: "kozuzynip@mailinator.com",
+    phone: "5461455611",
+    business_type: "other",
     status: "Active",
-    created_at: "2024-05-12T15:20:00Z",
-    last_login: "2024-07-26T10:10:00Z"
+    created_at: "2025-07-27T19:33:40.024128Z",
+    last_login: "2025-07-27T19:33:38.022203Z"
+  },
+  {
+    id: 6,
+    full_name: "Jane Doe",
+    email: "jane@example.com",
+    phone: "12345678",
+    business_type: "retail",
+    status: "Active",
+    created_at: "2025-07-28T02:27:35.554614Z",
+    last_login: "2025-07-28T02:27:32.963440Z"
+  },
+  {
+    id: 7,
+    full_name: "Coby Lindsay",
+    email: "lenuq@mailinator.com",
+    phone: "1365899999",
+    business_type: "service",
+    status: "Active",
+    created_at: "2025-07-28T04:22:45.377282Z",
+    last_login: "2025-07-28T04:22:43.179541Z"
+  },
+  {
+    id: 8,
+    full_name: "Blaine Combs",
+    email: "gydypehotu@mailinator.com",
+    phone: "1536555555",
+    business_type: "wholesale",
+    status: "Active",
+    created_at: "2025-07-28T06:36:25.978707Z",
+    last_login: "2025-07-28T06:36:23Z"
+  },
+  {
+    id: 9,
+    full_name: "Aloo",
+    email: "aloo@gmail.com",
+    phone: "57296528",
+    business_type: "service",
+    status: "Active",
+    created_at: "2025-07-28T06:45:11.176541Z",
+    last_login: "2025-07-28T06:45:08.831025Z"
+  },
+  {
+    id: 10,
+    full_name: "",
+    email: "admin@2025.com",
+    phone: "",
+    business_type: "",
+    status: "Active",
+    created_at: "2025-07-27T03:06:34.328774Z",
+    last_login: "2025-07-28T02:57:02.838101Z"
+  },
+  {
+    id: 11,
+    full_name: "Jordan Garcia",
+    email: "ruzu@mailinator.com",
+    phone: "155555555555",
+    business_type: "retail",
+    status: "Active",
+    created_at: "2025-07-28T08:36:51.372548Z",
+    last_login: "2025-07-28T08:36:49Z"
+  },
+  {
+    id: 12,
+    full_name: "Lillian Sparks",
+    email: "gyga@mailinator.com",
+    phone: "1365851456",
+    business_type: "other",
+    status: "Active",
+    created_at: "2025-07-28T08:50:25.266946Z",
+    last_login: "2025-07-28T08:50:22Z"
   }
 ];
+
 
 const reportTypes = [
   { id: 1, name: "User Registration Report", type: "users" },
@@ -91,98 +161,190 @@ const reportTypes = [
   { id: 3, name: "Revenue Analysis Report", type: "revenue" },
   { id: 4, name: "Feedback Summary Report", type: "feedback" },
 ];
-const testApiConnectivity = async () => {
-  try {
-    const response = await fetch("https://local-market-tax-system-7fuw.onrender.com/api/ping/");
-    if (!response.ok) {
-      throw new Error("API connectivity test failed");
-    }
-    const data = await response.json();
-    console.log("API connectivity success:", data);
-  } catch (error) {
-    console.error("API connectivity error:", error);
-  }
-};
+// const testApiConnectivity = async () => {
+//   try {
+//     const response = await fetch("https://local-market-tax-system-7fuw.onrender.com/api/ping/");
+//     if (!response.ok) {
+//       throw new Error("API connectivity test failed");
+//     }
+//     const data = await response.json();
+//     console.log("API connectivity success:", data);
+//   } catch (error) {
+//     console.error("API connectivity error:", error);
+//   }
+// };
 const initialTransactions = [
   {
     id: 1,
     user_id: 1,
     user_name: "John Doe",
-    amount: 1500,
+    amount: 1.00,
     category: "Fresh products trader",
-    phone: "254700123456",
-    mpesa_code: "QGH7XY8Z9A",
+    phone: "254794917386",
+    mpesa_code: "TGR9RNERHL",
     status: "Completed",
-    created_at: "2024-07-28T10:30:00Z",
+    created_at: "2025-07-27T16:57:17.948517Z",
     receipt_number: "RCP001",
-    checkout_id: "ws_CO_280720241030001"
+    checkout_id: "ws_CO_270720251957118794917386"
   },
   {
     id: 2,
     user_id: 2,
     user_name: "Mary Smith",
-    amount: 1500,
+    amount: 1.00,
     category: "Livestock and meat",
-    phone: "254700123457",
-    mpesa_code: "BGH7XY8Z9B",
+    phone: "254707418744",
+    mpesa_code: "TGR9RNQH15",
     status: "Completed",
-    created_at: "2024-07-27T14:20:00Z",
+    created_at: "2025-07-27T16:58:37.423874Z",
     receipt_number: "RCP002",
-    checkout_id: "ws_CO_270720241420002"
+    checkout_id: "ws_CO_270720251958148707418744"
   },
   {
     id: 3,
-    user_id: 3,
-    user_name: "Peter Johnson",
-    amount: 800,
-    category: "Fish vendor",
-    phone: "254700123458",
-    mpesa_code: "CGH7XY8Z9C",
-    status: "Failed",
-    created_at: "2024-07-26T16:45:00Z",
+    user_id: 1,
+    user_name: "John Doe",
+    amount: 1.00,
+    category: "Fresh products trader",
+    phone: "254794917386",
+    mpesa_code: "TGR5RO6F2V",
+    status: "Completed",
+    created_at: "2025-07-27T17:00:26.412260Z",
     receipt_number: "RCP003",
-    checkout_id: "ws_CO_260720241645003"
+    checkout_id: "ws_CO_270720252000204794917386"
   },
   {
     id: 4,
-    user_id: 4,
-    user_name: "Alice Brown",
-    amount: 600,
-    category: "Clothes and textile",
-    phone: "254700123459",
-    mpesa_code: "DGH7XY8Z9D",
-    status: "Pending",
-    created_at: "2024-07-25T11:30:00Z",
+    user_id: 2,
+    user_name: "Mary Smith",
+    amount: 0.00,
+    category: "Livestock and meat",
+    phone: "254707418744",
+    mpesa_code: "",
+    status: "Failed",
+    created_at: "2025-07-27T17:01:11.681868Z",
     receipt_number: "RCP004",
-    checkout_id: "ws_CO_250720241130004"
+    checkout_id: "ws_CO_270720252000459707418744"
   },
   {
     id: 5,
     user_id: 1,
     user_name: "John Doe",
-    amount: 1,
+    amount: 1.00,
     category: "Fresh products trader",
-    phone: "254700123456",
-    mpesa_code: "EGH7XY8Z9E",
+    phone: "254794917386",
+    mpesa_code: "TGR6RRRZUK",
     status: "Completed",
-    created_at: "2024-07-24T09:15:00Z",
+    created_at: "2025-07-27T17:15:59.133001Z",
     receipt_number: "RCP005",
-    checkout_id: "ws_CO_240720240915005"
+    checkout_id: "ws_CO_270720252015266794917386"
   },
   {
     id: 6,
-    user_id: 5,
-    user_name: "David Wilson",
-    amount: 700,
-    category: "Household goods",
-    phone: "254700123460",
-    mpesa_code: "FGH7XY8Z9F",
+    user_id: 2,
+    user_name: "Mary Smith",
+    amount: 1.00,
+    category: "Livestock and meat",
+    phone: "254707418744",
+    mpesa_code: "TGR1RSBVVX",
     status: "Completed",
-    created_at: "2024-07-23T13:45:00Z",
+    created_at: "2025-07-27T17:18:21.911930Z",
     receipt_number: "RCP006",
-    checkout_id: "ws_CO_230720241345006"
+    checkout_id: "ws_CO_270720252018093707418744"
+  },
+  {
+    id: 7,
+    user_id: 1,
+    user_name: "John Doe",
+    amount: 1.00,
+    category: "Fresh products trader",
+    phone: "254794917386",
+    mpesa_code: "TGR9RSPWRF",
+    status: "Completed",
+    created_at: "2025-07-27T17:20:10.608984Z",
+    receipt_number: "RCP007",
+    checkout_id: "ws_CO_270720252020042794917386"
+  },
+  {
+    id: 8,
+    user_id: 2,
+    user_name: "Mary Smith",
+    amount: 1.00,
+    category: "Livestock and meat",
+    phone: "254707418744",
+    mpesa_code: "TGR2RSTI5K",
+    status: "Pending",
+    created_at: "2025-07-27T17:20:36.087169Z",
+    receipt_number: "RCP008",
+    checkout_id: "ws_CO_270720252020227707418744"
+  },
+  {
+    id: 9,
+    user_id: 1,
+    user_name: "John Doe",
+    amount: 1.00,
+    category: "Fresh products trader",
+    phone: "254794917386",
+    mpesa_code: "TGR8RTOTXQ",
+    status: "Completed",
+    created_at: "2025-07-27T17:24:37.637446Z",
+    receipt_number: "RCP009",
+    checkout_id: "ws_CO_270720252024307794917386"
+  },
+  {
+    id: 10,
+    user_id: 1,
+    user_name: "John Doe",
+    amount: 1.00,
+    category: "Fresh products trader",
+    phone: "254794917386",
+    mpesa_code: "TGR5S1TNUJ",
+    status: "Completed",
+    created_at: "2025-07-27T18:05:47.509479Z",
+    receipt_number: "RCP010",
+    checkout_id: "ws_CO_270720252105415794917386"
+  },
+  {
+    id: 11,
+    user_id: 1,
+    user_name: "John Doe",
+    amount: 1.00,
+    category: "Fresh products trader",
+    phone: "254794917386",
+    mpesa_code: "TGR0SFEX9G",
+    status: "Completed",
+    created_at: "2025-07-27T19:56:19.120261Z",
+    receipt_number: "RCP011",
+    checkout_id: "ws_CO_270720252256090794917386"
+  },
+  {
+    id: 12,
+    user_id: 1,
+    user_name: "John Doe",
+    amount: 1.00,
+    category: "Fresh products trader",
+    phone: "254794917386",
+    mpesa_code: "TGS4STJAGM",
+    status: "Completed",
+    created_at: "2025-07-28T04:23:27.099566Z",
+    receipt_number: "RCP012",
+    checkout_id: "ws_CO_280720250723216794917386"
+  },
+  {
+    id: 13,
+    user_id: 2,
+    user_name: "Mary Smith",
+    amount: 1.00,
+    category: "Livestock and meat",
+    phone: "254707418744",
+    mpesa_code: "TGS7TCDKLR",
+    status: "Completed",
+    created_at: "2025-07-28T06:47:04.006200Z",
+    receipt_number: "RCP013",
+    checkout_id: "ws_CO_280720250946541707418744"
   }
 ];
+
 
 const initialFeedback = [
   {
@@ -192,7 +354,7 @@ const initialFeedback = [
     subject: "Payment Process",
     message: "The payment process is very smooth and user-friendly. Thank you for making it so easy to pay our taxes!",
     status: "Read",
-    created_at: "2024-07-28T10:30:00Z",
+    created_at: "2025-07-28T10:30:00Z",
     priority: "Low"
   },
   {
@@ -1143,9 +1305,6 @@ const downloadReport = (reportType) => {
         <div>
           <Badge bg="info" className="me-2">
             CSV Format
-          </Badge>
-          <Badge bg="secondary">
-            Mock Data
           </Badge>
         </div>
       </div>
