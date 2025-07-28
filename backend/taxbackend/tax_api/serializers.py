@@ -1,8 +1,7 @@
-# Add this to your existing serializers.py file
-
 from rest_framework import serializers
-from .models import User, Feedback, PaymentTransaction
+from .models import User
 from django.contrib.auth.password_validation import validate_password
+from .models import Feedback
 
 class FeedbackSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
         validators=[validate_password]
     )
     password2 = serializers.CharField(write_only=True, required=True)
-    
+
     class Meta:
         model = User
         fields = [
@@ -44,17 +43,3 @@ class UserSerializer(serializers.ModelSerializer):
             role=role
         )
         return user
-
-# ADD THIS NEW SERIALIZER
-class PaymentTransactionSerializer(serializers.ModelSerializer):
-    user_name = serializers.CharField(source='user.full_name', read_only=True)
-    
-    class Meta:
-        model = PaymentTransaction
-        fields = [
-            'id', 'transaction_id', 'receipt_number', 'user', 'user_name',
-            'phone_number', 'amount', 'account_reference', 'category', 
-            'status', 'mpesa_receipt_number', 'created_at', 'updated_at',
-            'transaction_date'
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'user_name']
