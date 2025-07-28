@@ -32,6 +32,16 @@ import {
 } from "recharts";
 
 const initialUsers = [
+   {
+    id: 1,
+    full_name: "Tax Api",
+    email: "taxapi@gmail.com",
+    phone: "254709023456",
+    business_type: "Fresh products trader",
+    status: "Active",
+    created_at: "2025-07-15T10:30:00Z",
+    last_login: "2025-07-28T14:20:00Z"
+  },
   {
     id: 1,
     full_name: "Rylee Meyers",
@@ -354,6 +364,7 @@ const initialFeedback = [
     subject: "Payment Process",
     message: "The payment process is very smooth and user-friendly. Thank you for making it so easy to pay our taxes!",
     status: "Read",
+    created_at: "2025-07-28T10:30:00Z",
     created_at: "2025-07-28T10:30:00Z",
     priority: "Low"
   },
