@@ -1,219 +1,271 @@
-// frontend/tax-collection-ui/src/pages/Register.jsx
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { register, testConnection } from '../services/AuthService';
-import RegisterForm from '../components/RegisterForm';
+import React, { useState } from "react";
+import { Person, Envelope, Lock, Building, CreditCard, GeoAlt } from "react-bootstrap-icons";
 
-export default function Register() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [connectionStatus, setConnectionStatus] = useState(null);
-  
-  const navigate = useNavigate();
-  const { currentUser, login: authLogin } = useAuth();
+export default function RegisterForm({ onSubmit }) {
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    username: "",
+    national_id: "",
+    business_type: "retail",
+    gender: "M",
+    market_of_operation: "",
+    password: "",
+    password2: "",
+  });
 
-  // Test API connection on component mount
-  useEffect(() => {
-    const checkConnection = async () => {
-      const result = await testConnection();
-      setConnectionStatus(result);
-      
-      if (!result.success) {
-        setError('Unable to connect to server. Please check your internet connection.');
-      }
-    };
-    
-    checkConnection();
-  }, []);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (currentUser) {
-      const redirectPath = currentUser.role === 'admin' ? '/admin-dashboard' : '/dashboard';
-      navigate(redirectPath, { replace: true });
-    }
-  }, [currentUser, navigate]);
-
-  const handleRegister = async (formData) => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      console.log('📝 Attempting registration...');
-      
-      // Validate passwords match
-      if (formData.password !== formData.password2) {
-        throw new Error('Passwords do not match');
-      }
-
-      // Remove password2 before sending to API
-      const { password2, ...registrationData } = formData;
-      
-      const response = await register(registrationData);
-      
-      console.log('✅ Registration successful:', response.data);
-      
-      setSuccess('Account created successfully! You are now logged in.');
-      
-      // Auto-login after successful registration
-      if (response.data.access) {
-        authLogin(response.data);
-        
-        // Redirect after short delay to show success message
-        setTimeout(() => {
-          const redirectPath = response.data.user?.role === 'admin' ? '/admin-dashboard' : '/dashboard';
-          navigate(redirectPath, { replace: true });
-        }, 1500);
-      } else {
-        // If no auto-login, redirect to login page
-        setTimeout(() => {
-          navigate('/login', { replace: true });
-        }, 2000);
-      }
-
-    } catch (error) {
-      console.error('❌ Registration failed:', error);
-      
-      // Handle different types of errors
-      let errorMessage = 'Registration failed. Please try again.';
-      
-      if (error.response?.data) {
-        const data = error.response.data;
-        if (typeof data === 'object') {
-          // Handle field-specific errors
-          const fieldErrors = [];
-          for (const [field, errors] of Object.entries(data)) {
-            if (Array.isArray(errors)) {
-              fieldErrors.push(`${field}: ${errors.join(', ')}`);
-            } else if (typeof errors === 'string') {
-              fieldErrors.push(`${field}: ${errors}`);
-            }
-          }
-          if (fieldErrors.length > 0) {
-            errorMessage = fieldErrors.join('\n');
-          }
-        } else if (typeof data === 'string') {
-          errorMessage = data;
-        }
-      } else {
-        errorMessage = error.message || errorMessage;
-      }
-      
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
   };
 
   return (
-    <div 
-      className="min-vh-100 d-flex align-items-center justify-content-center py-4"
+    <div
+      className="p-3 p-sm-4 mx-2 mx-sm-auto"
       style={{
-        backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundColor: '#ffffff',
+        color: '#333',
+        borderRadius: '10px',
+        boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+        maxWidth: '500px',
+        width: '100%',
       }}
     >
-      <div className="container">
-        <div className="row justify-content-center">
-          <div className="col-12 col-sm-10 col-md-8 col-lg-6">
-            {/* Header */}
-            <div className="text-center mb-4">
-              <img 
-                src="/logo.png" 
-                alt="Logo" 
-                className="mb-3"
-                style={{ height: '60px' }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
-              <h2 className="text-white fw-bold mb-2">Create Account</h2>
-              <p className="text-light opacity-75">
-                Join the Local Market Tax System
-              </p>
-            </div>
+      <form onSubmit={handleSubmit}>
+        {/* Full Name */}
+        <div className="mb-3 position-relative">
+          <Person 
+            className="position-absolute ms-2 text-muted" 
+            size={16}
+            style={{ top: '12px', left: '0' }}
+          />
+          <input
+            type="text"
+            name="full_name"
+            placeholder="Full Name"
+            required
+            onChange={handleChange}
+            className="form-control ps-4 ps-sm-5"
+            style={{ 
+              backgroundColor: '#f8f9fa',
+              fontSize: '16px',
+              minHeight: '44px'
+            }}
+          />
+        </div>
 
-            {/* Connection Status */}
-            {connectionStatus && !connectionStatus.success && (
-              <div className="alert alert-warning mb-3" role="alert">
-                <small>
-                  ⚠️ Server connection issue. Please check your internet connection.
-                </small>
-              </div>
-            )}
+        {/* Email */}
+        <div className="mb-3 position-relative">
+          <Envelope 
+            className="position-absolute ms-2 text-muted" 
+            size={16}
+            style={{ top: '12px', left: '0' }}
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+            onChange={handleChange}
+            className="form-control ps-4 ps-sm-5"
+            style={{ 
+              backgroundColor: '#f8f9fa',
+              fontSize: '16px',
+              minHeight: '44px'
+            }}
+          />
+        </div>
 
-            {/* Success Message */}
-            {success && (
-              <div className="alert alert-success mb-3" role="alert">
-                <div className="d-flex align-items-center">
-                  <span className="me-2">✅</span>
-                  <div>
-                    <strong>Success!</strong><br />
-                    <small>{success}</small>
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Two-column layout for larger screens */}
+        <div className="row">
+          {/* Username */}
+          <div className="col-12 col-md-6 mb-3">
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              required
+              onChange={handleChange}
+              className="form-control"
+              style={{ 
+                backgroundColor: '#f8f9fa',
+                fontSize: '16px',
+                minHeight: '44px'
+              }}
+            />
+          </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="alert alert-danger mb-3" role="alert">
-                <div className="d-flex align-items-center">
-                  <span className="me-2">❌</span>
-                  <div>
-                    <strong>Registration Failed</strong><br />
-                    <small style={{ whiteSpace: 'pre-line' }}>{error}</small>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Registration Form */}
-            <RegisterForm onSubmit={handleRegister} />
-
-            {/* Loading State */}
-            {loading && (
-              <div className="text-center mt-3">
-                <div className="spinner-border text-light" role="status">
-                  <span className="visually-hidden">Creating account...</span>
-                </div>
-                <p className="text-light mt-2">Creating your account...</p>
-              </div>
-            )}
-
-            {/* Sign In Link */}
-            <div className="text-center mt-4">
-              <p className="text-light mb-0">
-                Already have an account?{' '}
-                <Link 
-                  to="/login" 
-                  className="text-white fw-bold text-decoration-none"
-                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
-                >
-                  Sign In
-                </Link>
-              </p>
-            </div>
-
-            {/* Debug Info (only in development) */}
-            {process.env.NODE_ENV === 'development' && connectionStatus && (
-              <div className="mt-4">
-                <details>
-                  <summary className="text-light small">Debug Info</summary>
-                  <pre className="text-light small mt-2">
-                    {JSON.stringify(connectionStatus, null, 2)}
-                  </pre>
-                </details>
-              </div>
-            )}
+          {/* National ID */}
+          <div className="col-12 col-md-6 mb-3 position-relative">
+            <CreditCard 
+              className="position-absolute ms-2 text-muted d-none d-md-block" 
+              size={16}
+              style={{ top: '12px', left: '0' }}
+            />
+            <input
+              type="text"
+              name="national_id"
+              placeholder="National ID"
+              required
+              onChange={handleChange}
+              className="form-control ps-md-5"
+              style={{ 
+                backgroundColor: '#f8f9fa',
+                fontSize: '16px',
+                minHeight: '44px'
+              }}
+            />
           </div>
         </div>
-      </div>
+
+        {/* Two-column layout for selects */}
+        <div className="row">
+          {/* Business Type */}
+          <div className="col-12 col-md-6 mb-3 position-relative">
+            <Building 
+              className="position-absolute ms-2 text-muted d-none d-md-block" 
+              size={16}
+              style={{ top: '12px', left: '0', zIndex: 5 }}
+            />
+            <select
+              name="business_type"
+              required
+              onChange={handleChange}
+              className="form-select ps-md-5"
+              defaultValue=""
+              style={{ 
+                fontSize: '16px',
+                minHeight: '44px'
+              }}
+            >
+              <option value="" disabled>Business Type</option>
+              <option value="retail">Retail</option>
+              <option value="wholesale">Wholesale</option>
+              <option value="service">Service Provider</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          {/* Gender */}
+          <div className="col-12 col-md-6 mb-3">
+            <select
+              name="gender"
+              required
+              onChange={handleChange}
+              className="form-select"
+              defaultValue=""
+              style={{ 
+                fontSize: '16px',
+                minHeight: '44px'
+              }}
+            >
+              <option value="" disabled>Gender</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+              <option value="O">Other</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Market of Operation */}
+        <div className="mb-3 position-relative">
+          <GeoAlt 
+            className="position-absolute ms-2 text-muted" 
+            size={16}
+            style={{ top: '12px', left: '0', zIndex: 5 }}
+          />
+          <select
+            name="market_of_operation"
+            required
+            onChange={handleChange}
+            className="form-select ps-4 ps-sm-5"
+            defaultValue=""
+            style={{ 
+              fontSize: '16px',
+              minHeight: '44px'
+            }}
+          >
+            <option value="" disabled>Market of Operation</option>
+            <option value="kapsabet">Kapsabet Market</option>
+            <option value="mosoriot">Mosoriot Market</option>
+            <option value="nandi_hills">Nandi Hills Market</option>
+            <option value="kabiyet">Kabiyet Market</option>
+            <option value="kebulonik">Kebulonik Market</option>
+            <option value="lessos">Lessos Market</option>
+            <option value="kaiboi">Kaiboi Market</option>
+            <option value="chepterit">Chepterit Market</option>
+            <option value="baraton">Baraton Market</option>
+            <option value="kipkaren">Kipkaren Market</option>
+          </select>
+        </div>
+
+        {/* Password Fields */}
+        <div className="row">
+          {/* Password */}
+          <div className="col-12 col-md-6 mb-3 position-relative">
+            <Lock 
+              className="position-absolute ms-2 text-muted" 
+              size={16}
+              style={{ top: '12px', left: '0' }}
+            />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              required
+              onChange={handleChange}
+              className="form-control ps-4 ps-sm-5"
+              style={{ 
+                backgroundColor: '#f8f9fa',
+                fontSize: '16px',
+                minHeight: '44px'
+              }}
+            />
+          </div>
+
+          {/* Confirm Password */}
+          <div className="col-12 col-md-6 mb-3 position-relative">
+            <Lock 
+              className="position-absolute ms-2 text-muted" 
+              size={16}
+              style={{ top: '12px', left: '0' }}
+            />
+            <input
+              type="password"
+              name="password2"
+              placeholder="Confirm Password"
+              required
+              onChange={handleChange}
+              className="form-control ps-4 ps-sm-5"
+              style={{ 
+                backgroundColor: '#f8f9fa',
+                fontSize: '16px',
+                minHeight: '44px'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          className="btn w-100 mt-2"
+          style={{
+            backgroundColor: '#b30000',
+            color: '#fff',
+            fontWeight: 'bold',
+            minHeight: '48px',
+            fontSize: '16px',
+            borderRadius: '6px'
+          }}
+        >
+          Create Account
+        </button>
+      </form>
     </div>
   );
 }
