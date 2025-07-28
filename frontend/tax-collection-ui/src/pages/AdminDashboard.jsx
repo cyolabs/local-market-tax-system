@@ -1,8 +1,4 @@
-// AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
 import {
   Container,
   Row,
@@ -10,229 +6,1372 @@ import {
   Card,
   Button,
   ListGroup,
+  Alert,
   Table,
-  InputGroup,
-  FormControl,
   Form,
+  Modal,
+  Spinner,
+  Badge,
+  Tab,
+  Tabs
 } from "react-bootstrap";
 import {
-  Bell,
-  Translate,
-  CurrencyExchange,
-  Percent,
-  Trash,
-  ChevronDown,
-  ChevronRight,
-} from "react-bootstrap-icons";
-
-import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
   CartesianGrid,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer
 } from "recharts";
 
-const chartData = [
-  { date: "2/1", tax: 18 },
-  { date: "2/8", tax: 15 },
-  { date: "2/15", tax: 12 },
-  { date: "2/22", tax: 10 },
-  { date: "2/29", tax: 9 },
-  { date: "3/8", tax: 8.5 },
-  { date: "3/15", tax: 8 },
-  { date: "3/22", tax: 8.5 },
-  { date: "3/29", tax: 10 },
-  { date: "4/5", tax: 14 },
-  { date: "4/12", tax: 17 },
-  { date: "4/19", tax: 20 },
+// Mock data
+const initialUsers = [
+  {
+    id: 1,
+    full_name: "John Doe",
+    email: "john@example.com",
+    phone: "254700123456",
+    business_type: "Fresh products trader",
+    status: "Active",
+    created_at: "2024-01-15T10:30:00Z",
+    last_login: "2024-07-28T14:20:00Z"
+  },
+  {
+    id: 2,
+    full_name: "Mary Smith",
+    email: "mary@example.com",
+    phone: "254700123457",
+    business_type: "Livestock and meat",
+    status: "Active",
+    created_at: "2024-02-20T09:15:00Z",
+    last_login: "2024-07-27T16:45:00Z"
+  },
+  {
+    id: 3,
+    full_name: "Peter Johnson",
+    email: "peter@example.com",
+    phone: "254700123458",
+    business_type: "Fish vendor",
+    status: "Inactive",
+    created_at: "2024-03-10T11:00:00Z",
+    last_login: "2024-07-20T12:30:00Z"
+  },
+  {
+    id: 4,
+    full_name: "Alice Brown",
+    email: "alice@example.com",
+    phone: "254700123459",
+    business_type: "Clothes and textile",
+    status: "Active",
+    created_at: "2024-04-05T08:45:00Z",
+    last_login: "2024-07-28T13:15:00Z"
+  },
+  {
+    id: 5,
+    full_name: "David Wilson",
+    email: "david@example.com",
+    phone: "254700123460",
+    business_type: "Household goods",
+    status: "Active",
+    created_at: "2024-05-12T15:20:00Z",
+    last_login: "2024-07-26T10:10:00Z"
+  }
+];
+const testApiConnectivity = async () => {
+  try {
+    const response = await fetch("https://local-market-tax-system-7fuw.onrender.com/api/ping/");
+    if (!response.ok) {
+      throw new Error("API connectivity test failed");
+    }
+    const data = await response.json();
+    console.log("API connectivity success:", data);
+  } catch (error) {
+    console.error("API connectivity error:", error);
+  }
+};
+const initialTransactions = [
+  {
+    id: 1,
+    user_id: 1,
+    user_name: "John Doe",
+    amount: 1500,
+    category: "Fresh products trader",
+    phone: "254700123456",
+    mpesa_code: "QGH7XY8Z9A",
+    status: "Completed",
+    created_at: "2024-07-28T10:30:00Z",
+    receipt_number: "RCP001",
+    checkout_id: "ws_CO_280720241030001"
+  },
+  {
+    id: 2,
+    user_id: 2,
+    user_name: "Mary Smith",
+    amount: 1500,
+    category: "Livestock and meat",
+    phone: "254700123457",
+    mpesa_code: "BGH7XY8Z9B",
+    status: "Completed",
+    created_at: "2024-07-27T14:20:00Z",
+    receipt_number: "RCP002",
+    checkout_id: "ws_CO_270720241420002"
+  },
+  {
+    id: 3,
+    user_id: 3,
+    user_name: "Peter Johnson",
+    amount: 800,
+    category: "Fish vendor",
+    phone: "254700123458",
+    mpesa_code: "CGH7XY8Z9C",
+    status: "Failed",
+    created_at: "2024-07-26T16:45:00Z",
+    receipt_number: "RCP003",
+    checkout_id: "ws_CO_260720241645003"
+  },
+  {
+    id: 4,
+    user_id: 4,
+    user_name: "Alice Brown",
+    amount: 600,
+    category: "Clothes and textile",
+    phone: "254700123459",
+    mpesa_code: "DGH7XY8Z9D",
+    status: "Pending",
+    created_at: "2024-07-25T11:30:00Z",
+    receipt_number: "RCP004",
+    checkout_id: "ws_CO_250720241130004"
+  },
+  {
+    id: 5,
+    user_id: 1,
+    user_name: "John Doe",
+    amount: 1,
+    category: "Fresh products trader",
+    phone: "254700123456",
+    mpesa_code: "EGH7XY8Z9E",
+    status: "Completed",
+    created_at: "2024-07-24T09:15:00Z",
+    receipt_number: "RCP005",
+    checkout_id: "ws_CO_240720240915005"
+  },
+  {
+    id: 6,
+    user_id: 5,
+    user_name: "David Wilson",
+    amount: 700,
+    category: "Household goods",
+    phone: "254700123460",
+    mpesa_code: "FGH7XY8Z9F",
+    status: "Completed",
+    created_at: "2024-07-23T13:45:00Z",
+    receipt_number: "RCP006",
+    checkout_id: "ws_CO_230720241345006"
+  }
 ];
 
-const topMarkets = [
-  "Kapsabet Market",
-  "Mosoriot Market",
-  "Nandi Hills Market",
-  "Kabiyet Market",
-  "Kebulonik Market",
-  "Lessos Market",
-  "Kaiboi Market",
-  "Chepterit Market",
-  "Baraton Market",
-  "Kipkaren Market",
+const initialFeedback = [
+  {
+    id: 1,
+    user_id: 1,
+    user_name: "John Doe",
+    subject: "Payment Process",
+    message: "The payment process is very smooth and user-friendly. Thank you for making it so easy to pay our taxes!",
+    status: "Read",
+    created_at: "2024-07-28T10:30:00Z",
+    priority: "Low"
+  },
+  {
+    id: 2,
+    user_id: 2,
+    user_name: "Mary Smith",
+    subject: "System Issue",
+    message: "I experienced some delays in payment confirmation yesterday. The system took about 10 minutes to confirm my payment. Please look into this issue.",
+    status: "Unread",
+    created_at: "2024-07-27T14:20:00Z",
+    priority: "High"
+  },
+  {
+    id: 3,
+    user_id: 3,
+    user_name: "Peter Johnson",
+    subject: "Feature Request",
+    message: "It would be great to have monthly payment summaries sent via email. This would help us keep better records of our tax payments.",
+    status: "In Review",
+    created_at: "2024-07-26T16:45:00Z",
+    priority: "Medium"
+  },
+  {
+    id: 4,
+    user_id: 4,
+    user_name: "Alice Brown",
+    subject: "Mobile App Request",
+    message: "Please consider developing a mobile app for easier access to the payment system when we're at the market.",
+    status: "Unread",
+    created_at: "2024-07-25T11:30:00Z",
+    priority: "Medium"
+  },
+  {
+    id: 5,
+    user_id: 5,
+    user_name: "David Wilson",
+    subject: "Receipt Issue",
+    message: "I couldn't download my receipt after payment. Had to contact support to get it resolved.",
+    status: "Read",
+    created_at: "2024-07-24T09:15:00Z",
+    priority: "High"
+  }
+];
+
+// Chart data for analytics
+const revenueData = [
+  { month: 'Jan', revenue: 45000, transactions: 120, users: 15 },
+  { month: 'Feb', revenue: 52000, transactions: 140, users: 18 },
+  { month: 'Mar', revenue: 48000, transactions: 130, users: 22 },
+  { month: 'Apr', revenue: 61000, transactions: 160, users: 25 },
+  { month: 'May', revenue: 55000, transactions: 145, users: 28 },
+  { month: 'Jun', revenue: 67000, transactions: 180, users: 32 },
+  { month: 'Jul', revenue: 72000, transactions: 190, users: 35 }
+];
+
+const categoryData = [
+  { name: 'Fresh products', value: 35, amount: 52500, color: '#8884d8' },
+  { name: 'Livestock and meat', value: 25, amount: 37500, color: '#82ca9d' },
+  { name: 'Fish vendors', value: 20, amount: 16000, color: '#ffc658' },
+  { name: 'Clothes and textile', value: 15, amount: 9000, color: '#ff7300' },
+  { name: 'Household goods', value: 5, amount: 3500, color: '#00ff88' }
 ];
 
 const AdminDashboard = () => {
-  const [activeView, setActiveView] = useState("dashboard");
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { currentUser, token, logout } = useAuth();
-  const navigate = useNavigate();
+  const [activeSection, setActiveSection] = useState("overview");
+  const [users, setUsers] = useState(initialUsers);
+  const [transactions, setTransactions] = useState(initialTransactions);
+  const [feedback, setFeedback] = useState(initialFeedback);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [modalType, setModalType] = useState("");
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get("/admin/vendors/", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUsers(response.data);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Form states
+  const [userForm, setUserForm] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    business_type: "",
+    status: "Active"
+  });
 
-    if (activeView === "registered") {
-      fetchUsers();
-    }
-  }, [token, activeView]);
+  // Filters
+  const [statusFilter, setStatusFilter] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  // Mock API functions with simulated delays
+  const simulateApiCall = async (duration = 1000) => {
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, duration));
+    setLoading(false);
   };
 
-  const renderDashboard = () => (
-    <>
-      <div className="d-flex gap-3 flex-wrap mb-4">
-        <Card className="shadow-sm text-center flex-grow-1" style={{ minWidth: "200px", backgroundColor: "#FFFAFA" }}>
-          <Card.Body>
-            <div>📝</div>
-            <h6 className="text-muted">Registered traders</h6>
-            <h3 className="fw-bold text-danger">{users.length}</h3>
-          </Card.Body>
-        </Card>
-        <Card className="shadow-sm text-center flex-grow-1" style={{ minWidth: "200px", backgroundColor: "#FFFAFA" }}>
-          <Card.Body>
-            <div>💵</div>
-            <h6 className="text-muted">Total tax/week</h6>
-            <h4 className="fw-bold text-primary">Ksh. 100,350</h4>
-          </Card.Body>
-        </Card>
-        <Card className="shadow-sm text-center flex-grow-1" style={{ minWidth: "200px", backgroundColor: "#FFFAFA" }}>
-          <Card.Body>
-            <div>📊</div>
-            <h6 className="text-muted">Collection Rate %</h6>
-            <h3 className="fw-bold text-danger">60%</h3>
-          </Card.Body>
-        </Card>
-      </div>
+  const showAlert = (message, type = "success") => {
+    if (type === "success") {
+      setSuccess(message);
+      setTimeout(() => setSuccess(null), 3000);
+    } else {
+      setError(message);
+      setTimeout(() => setError(null), 3000);
+    }
+  };
 
-      <Row>
-        <Col md={8}>
-          <Card className="shadow-sm mb-4">
-            <Card.Header className="fw-bold text-center">WEEKLY TREND GRAPH</Card.Header>
-            <Card.Body>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="tax" fill="#f9b233" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4}>
-          <Card className="shadow-sm text-center mb-4">
-            <Card.Header className="fw-bold text-danger">Top Markets</Card.Header>
-            <ListGroup variant="flush">
-              {topMarkets.map((market, idx) => (
-                <ListGroup.Item key={idx}>{idx + 1}. {market}</ListGroup.Item>
-              ))}
-            </ListGroup>
-          </Card>
-        </Col>
-      </Row>
-    </>
-  );
 
-  const renderRegisteredUsers = () => (
-    <>
-      <h4 className="fw-bold mb-3">Registered Users</h4>
-      {loading ? (
-        <p>Loading users...</p>
-      ) : (
-        <Table striped bordered hover responsive>
-          <thead style={{ backgroundColor: "#663B53", color: "white" }}>
-            <tr>
-              <th>Full Name</th>
-              <th>Username</th>
-              <th>National ID</th>
-              <th>Market</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Business Type</th>
-              <th>Gender</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.national_id}>
-                <td>{user.full_name}</td>
-                <td>{user.username}</td>
-                <td>{user.national_id}</td>
-                <td>{user.market_of_operation}</td>
-                <td>{user.email}</td>
-                <td>{user.role}</td>
-                <td>{user.business_type}</td>
-                <td>{user.gender}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
-    </>
-  );
+    // User management functions
+  const deleteUser = async (userId) => {
+    await simulateApiCall(1000);
+    const userToDelete = users.find(u => u.id === userId);
+    setUsers(users.filter(user => user.id !== userId));
+    setTransactions(transactions.filter(txn => txn.user_id !== userId));
+    setFeedback(feedback.filter(fb => fb.user_id !== userId));
+    showAlert(`User ${userToDelete?.full_name} deleted successfully`);
+  };
 
-  const renderTaxReports = () => (
-    <Card className="p-3">
-    </Card>
-  );
+  const updateUserStatus = async (userId, newStatus) => {
+    await simulateApiCall(500);
+    setUsers(users.map(user => 
+      user.id === userId ? { ...user, status: newStatus } : user
+    ));
+    showAlert(`User status updated to ${newStatus}`);
+  };
 
-  const renderFeedback = () => (
-    <Card className="p-3">
-    </Card>
-  );
+  const createOrUpdateUser = async () => {
+    await simulateApiCall(1000);
+    
+    if (selectedItem) {
+      // Update existing user
+      setUsers(users.map(user => 
+        user.id === selectedItem.id 
+          ? { ...user, ...userForm }
+          : user
+      ));
+      showAlert("User updated successfully");
+    } else {
+      // Create new user
+      const newUser = {
+        id: Math.max(...users.map(u => u.id)) + 1,
+        ...userForm,
+        created_at: new Date().toISOString(),
+        last_login: "Never"
+      };
+      setUsers([...users, newUser]);
+      showAlert("User created successfully");
+    }
+    
+    closeModal();
+  };
 
-  const renderSettings = () => (
-    <Container>
-      <h5 className="text-center fw-bold mb-4">Settings</h5>
-      <Row className="py-2 border-bottom">
-        <Col xs={1}><Bell size={20} /></Col>
-        <Col>Notifications</Col>
-        <Col xs={2}><Form.Check type="switch" defaultChecked /></Col>
-      </Row>
-    </Container>
-  );
+  // Transaction management functions
+  const updateTransactionStatus = async (transactionId, newStatus) => {
+    await simulateApiCall(500);
+    setTransactions(transactions.map(txn => 
+      txn.id === transactionId 
+        ? { ...txn, status: newStatus }
+        : txn
+    ));
+    showAlert(`Transaction status updated to ${newStatus}`);
+  };
+
+  // Feedback management functions
+  const updateFeedbackStatus = async (feedbackId, newStatus) => {
+    await simulateApiCall(500);
+    setFeedback(feedback.map(fb => 
+      fb.id === feedbackId 
+        ? { ...fb, status: newStatus }
+        : fb
+    ));
+    showAlert(`Feedback status updated to ${newStatus}`);
+  };
+
+  const deleteFeedback = async (feedbackId) => {
+    await simulateApiCall(500);
+    setFeedback(feedback.filter(fb => fb.id !== feedbackId));
+    showAlert("Feedback deleted successfully");
+  };
+
+  // Modal functions
+  const openUserModal = (user = null) => {
+    setModalType("user");
+    setSelectedItem(user);
+    if (user) {
+      setUserForm({
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        business_type: user.business_type,
+        status: user.status
+      });
+    } else {
+      setUserForm({
+        full_name: "",
+        email: "",
+        phone: "",
+        business_type: "",
+        status: "Active"
+      });
+    }
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedItem(null);
+    setModalType("");
+  };
+
+  // Filter functions
+  const getFilteredTransactions = () => {
+    return transactions.filter(txn => {
+      if (statusFilter && txn.status !== statusFilter) return false;
+      if (categoryFilter && txn.category !== categoryFilter) return false;
+      if (startDate && new Date(txn.created_at) < new Date(startDate)) return false;
+      if (endDate && new Date(txn.created_at) > new Date(endDate)) return false;
+      return true;
+    });
+  };
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      'Completed': { bg: 'success', text: 'Completed' },
+      'Success': { bg: 'success', text: 'Success' },
+      'Pending': { bg: 'warning', text: 'Pending' },
+      'Failed': { bg: 'danger', text: 'Failed' },
+      'Active': { bg: 'success', text: 'Active' },
+      'Inactive': { bg: 'secondary', text: 'Inactive' },
+      'Read': { bg: 'success', text: 'Read' },
+      'Unread': { bg: 'danger', text: 'Unread' },
+      'In Review': { bg: 'warning', text: 'In Review' }
+    };
+    
+    const config = statusConfig[status] || { bg: 'secondary', text: status };
+    return <Badge bg={config.bg}>{config.text}</Badge>;
+  };
+
+  // Statistics calculations
+  const stats = {
+    totalUsers: users.length,
+    activeUsers: users.filter(u => u.status === "Active").length,
+    totalRevenue: transactions
+      .filter(t => t.status === "Completed")
+      .reduce((sum, t) => sum + t.amount, 0),
+    totalTransactions: transactions.length,
+    completedTransactions: transactions.filter(t => t.status === "Completed").length,
+    pendingTransactions: transactions.filter(t => t.status === "Pending").length,
+    failedTransactions: transactions.filter(t => t.status === "Failed").length,
+    unreadFeedback: feedback.filter(f => f.status === "Unread").length,
+    highPriorityFeedback: feedback.filter(f => f.priority === "High").length
+  };
+
+    const renderContent = () => {
+    switch (activeSection) {
+      case "overview":
+        return (
+          <>
+            <h4 className="mb-4 text-center">System Overview & Analytics</h4>
+            
+            {/* Statistics Cards */}
+            <Row className="mb-4">
+              <Col md={3} className="mb-3">
+                <Card className="text-center shadow-sm h-100">
+                  <Card.Body>
+                    <Card.Title className="text-primary">Total Users</Card.Title>
+                    <h2 className="text-primary">{stats.totalUsers}</h2>
+                    <Card.Text className="text-muted">
+                      {stats.activeUsers} Active
+                    </Card.Text>
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col md={3} className="mb-3">
+                <Card className="text-center shadow-sm h-100">
+                  <Card.Body>
+                    <Card.Title className="text-success">Total Revenue</Card.Title>
+                    <h2 className="text-success">KES {stats.totalRevenue.toLocaleString()}</h2>
+                    <Card.Text className="text-muted">
+                      This Month
+                    </Card.Text>
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col md={3} className="mb-3">
+                <Card className="text-center shadow-sm h-100">
+                  <Card.Body>
+                    <Card.Title className="text-info">Transactions</Card.Title>
+                    <h2 className="text-info">{stats.totalTransactions}</h2>
+                    <Card.Text className="text-muted">
+                      {stats.completedTransactions} Completed
+                    </Card.Text>
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col md={3} className="mb-3">
+                <Card className="text-center shadow-sm h-100">
+                  <Card.Body>
+                    <Card.Title className="text-warning">Pending Items</Card.Title>
+                    <h2 className="text-warning">{stats.pendingTransactions + stats.unreadFeedback}</h2>
+                    <Card.Text className="text-muted">
+                      Need Attention
+                    </Card.Text>
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
+
+            {/* Charts */}
+            <Row className="mb-4">
+              <Col lg={8} className="mb-4">
+                <Card>
+                  <Card.Header>
+                    <h5 className="mb-0">Revenue & User Growth Trend</h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={revenueData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis yAxisId="left" />
+                        <YAxis yAxisId="right" orientation="right" />
+                        <Tooltip />
+                        <Legend />
+                        <Line 
+                          yAxisId="left"
+                          type="monotone" 
+                          dataKey="revenue" 
+                          stroke="#8884d8" 
+                          strokeWidth={2}
+                          name="Revenue (KES)"
+                        />
+                        <Line 
+                          yAxisId="right"
+                          type="monotone" 
+                          dataKey="users" 
+                          stroke="#82ca9d" 
+                          strokeWidth={2}
+                          name="Total Users"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col lg={4} className="mb-4">
+                <Card>
+                  <Card.Header>
+                    <h5 className="mb-0">Revenue by Category</h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={categoryData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {categoryData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
+
+            {/* Recent Activity */}
+            <Row>
+              <Col lg={6} className="mb-4">
+                <Card>
+                  <Card.Header>
+                    <h5 className="mb-0">Recent Transactions</h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <div className="table-responsive">
+                      <Table size="sm">
+                        <thead>
+                          <tr>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>M-Pesa Code</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {getFilteredTransactions().slice(0, 5).map(txn => (
+                            <tr key={txn.id}>
+                              <td><strong>{txn.user_name}</strong></td>
+                              <td><strong>KES {parseFloat(txn.amount).toLocaleString()}</strong></td>
+                              <td><small>{txn.category}</small></td>
+                              <td>{txn.phone}</td>
+                              <td>{getStatusBadge(txn.status)}</td>
+                              <td>
+                                {txn.mpesa_code ? (
+                                  <small className="font-monospace text-success">
+                                    {txn.mpesa_code}
+                                  </small>
+                                ) : (
+                                  <small className="text-muted">-</small>
+                                )}
+                              </td>
+                              <td>
+                                {new Date(txn.created_at).toLocaleDateString('en-GB', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </td>
+                              <td>
+                                {txn.status === "Pending" && (
+                                  <div className="d-flex gap-1">
+                                    <Button
+                                      variant="outline-success"
+                                      size="sm"
+                                      onClick={() => updateTransactionStatus(txn.id, 'Completed')}
+                                      disabled={loading}
+                                    >
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      variant="outline-danger"
+                                      size="sm"
+                                      onClick={() => updateTransactionStatus(txn.id, 'Failed')}
+                                      disabled={loading}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col lg={6} className="mb-4">
+                <Card>
+                  <Card.Header>
+                    <h5 className="mb-0">Recent Feedback</h5>
+                  </Card.Header>
+                  <Card.Body>
+                    {feedback.slice(0, 3).map(fb => (
+                      <div key={fb.id} className="mb-3 pb-3 border-bottom">
+                        <div className="d-flex justify-content-between align-items-start">
+                          <div>
+                            <strong>{fb.subject}</strong>
+                            <div className="text-muted small">
+                              From: {fb.user_name}
+                            </div>
+                          </div>
+                          <div className="text-end">
+                            {getStatusBadge(fb.status)}
+                            <div className="small text-muted mt-1">
+                              {new Date(fb.created_at).toLocaleDateString('en-GB')}
+                            </div>
+                          </div>
+                        </div>
+                        <p className="mb-1 mt-2 small">{fb.message.substring(0, 100)}...</p>
+                      </div>
+                    ))}
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
+          </>
+        );
+
+      case "users":
+        return (
+          <>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h4 className="mb-0">User Management</h4>
+              <Button variant="primary" onClick={() => openUserModal()}>
+                Add New User
+              </Button>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-5">
+                <Spinner animation="border" variant="primary" />
+                <p className="mt-2">Loading users...</p>
+              </div>
+            ) : users.length > 0 ? (
+              <Card>
+                <Card.Body>
+                  <div className="table-responsive">
+                    <Table hover>
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Phone</th>
+                          <th>Business Type</th>
+                          <th>Status</th>
+                          <th>Created</th>
+                          <th>Last Login</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {users.map(user => (
+                          <tr key={user.id}>
+                            <td><strong>{user.full_name}</strong></td>
+                            <td>{user.email}</td>
+                            <td>{user.phone}</td>
+                            <td>{user.business_type}</td>
+                            <td>{getStatusBadge(user.status)}</td>
+                            <td>
+                              {new Date(user.created_at).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              })}
+                            </td>
+                            <td>
+                              {user.last_login === "Never" ? (
+                                <span className="text-muted">Never</span>
+                              ) : (
+                                new Date(user.last_login).toLocaleDateString('en-GB', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: '2-digit'
+                                })
+                              )}
+                            </td>
+                            <td>
+                              <div className="d-flex gap-1">
+                                <Button
+                                  variant="outline-primary"
+                                  size="sm"
+                                  onClick={() => openUserModal(user)}
+                                  disabled={loading}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant={user.status === "Active" ? "outline-warning" : "outline-success"}
+                                  size="sm"
+                                  onClick={() => updateUserStatus(user.id, user.status === "Active" ? "Inactive" : "Active")}
+                                  disabled={loading}
+                                >
+                                  {user.status === "Active" ? "Deactivate" : "Activate"}
+                                </Button>
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  onClick={() => deleteUser(user.id)}
+                                  disabled={loading}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                </Card.Body>
+              </Card>
+            ) : (
+              <Alert variant="info" className="text-center py-5">
+                <h5>No users found</h5>
+                <p className="mb-3">
+                  No users have been registered yet.
+                </p>
+                <Button variant="primary" onClick={() => openUserModal()}>
+                  Add First User
+                </Button>
+              </Alert>
+            )}
+          </>
+        );
+
+
+              case "transactions":
+        return (
+          <>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h4 className="mb-0">Transaction Management</h4>
+              <div className="d-flex gap-2">
+                <Badge bg="success" className="me-2">
+                  {stats.completedTransactions} Completed
+                </Badge>
+                <Badge bg="warning" className="me-2">
+                  {stats.pendingTransactions} Pending
+                </Badge>
+                <Badge bg="danger">
+                  {stats.failedTransactions} Failed
+                </Badge>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <Card className="mb-4">
+              <Card.Body>
+                <Row>
+                  <Col md={3}>
+                    <Form.Group>
+                      <Form.Label>Status Filter</Form.Label>
+                      <Form.Select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                      >
+                        <option value="">All Statuses</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Failed">Failed</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={3}>
+                    <Form.Group>
+                      <Form.Label>Category Filter</Form.Label>
+                      <Form.Select
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                      >
+                        <option value="">All Categories</option>
+                        <option value="Fresh products trader">Fresh products trader</option>
+                        <option value="Livestock and meat">Livestock and meat</option>
+                        <option value="Fish vendor">Fish vendor</option>
+                        <option value="Clothes and textile">Clothes and textile</option>
+                        <option value="Household goods">Household goods</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={3}>
+                    <Form.Group>
+                      <Form.Label>Start Date</Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={3}>
+                    <Form.Group>
+                      <Form.Label>End Date</Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+
+            {loading ? (
+              <div className="text-center py-5">
+                <Spinner animation="border" variant="primary" />
+                <p className="mt-2">Loading transactions...</p>
+              </div>
+            ) : getFilteredTransactions().length > 0 ? (
+              <Card>
+                <Card.Body>
+                  <div className="table-responsive">
+                    <Table hover>
+                      <thead>
+                        <tr>
+                          <th>User</th>
+                          <th>Amount</th>
+                          <th>Category</th>
+                          <th>Phone</th>
+                          <th>Status</th>
+                          <th>M-Pesa Code</th>
+                          <th>Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getFilteredTransactions().map(txn => (
+                          <tr key={txn.id}>
+                            <td><strong>{txn.user_name}</strong></td>
+                            <td><strong>KES {parseFloat(txn.amount).toLocaleString()}</strong></td>
+                            <td><small>{txn.category}</small></td>
+                            <td>{txn.phone}</td>
+                            <td>{getStatusBadge(txn.status)}</td>
+                            <td>
+                              {txn.mpesa_code ? (
+                                <small className="font-monospace text-success">
+                                  {txn.mpesa_code}
+                                </small>
+                              ) : (
+                                <small className="text-muted">-</small>
+                              )}
+                            </td>
+                            <td>
+                              {new Date(txn.created_at).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </td>
+                            <td>
+                              {txn.status === "Pending" && (
+                                <div className="d-flex gap-1">
+                                  <Button
+                                    variant="outline-success"
+                                    size="sm"
+                                    onClick={() => updateTransactionStatus(txn.id, 'Completed')}
+                                    disabled={loading}
+                                  >
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    variant="outline-danger"
+                                    size="sm"
+                                    onClick={() => updateTransactionStatus(txn.id, 'Failed')}
+                                    disabled={loading}
+                                  >
+                                    Reject
+                                  </Button>
+                                </div>
+                              )}
+                              {txn.status === "Failed" && (
+                                <Button
+                                  variant="outline-primary"
+                                  size="sm"
+                                  onClick={() => updateTransactionStatus(txn.id, 'Completed')}
+                                  disabled={loading}
+                                >
+                                  Retry
+                                </Button>
+                              )}
+                              {txn.status === "Completed" && (
+                                <Button
+                                  variant="outline-info"
+                                  size="sm"
+                                  disabled
+                                >
+                                  Completed
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                </Card.Body>
+              </Card>
+            ) : (
+              <Alert variant="info" className="text-center py-5">
+                <h5>No transactions found</h5>
+                <p className="mb-0">
+                  No transactions match your current filters.
+                </p>
+              </Alert>
+            )}
+          </>
+        );
+
+      case "feedback":
+        return (
+          <>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h4 className="mb-0">User Feedback Management</h4>
+              <div className="d-flex gap-2">
+                <Badge bg="danger" className="me-2">
+                  {stats.unreadFeedback} Unread
+                </Badge>
+                <Badge bg="warning" className="me-2">
+                  {feedback.filter(f => f.status === 'In Review').length} In Review
+                </Badge>
+                <Badge bg="danger">
+                  {stats.highPriorityFeedback} High Priority
+                </Badge>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-5">
+                <Spinner animation="border" variant="primary" />
+                <p className="mt-2">Loading feedback...</p>
+              </div>
+            ) : feedback.length > 0 ? (
+              <Row>
+                {feedback.map(fb => (
+                  <Col lg={6} key={fb.id} className="mb-4">
+                    <Card className={`h-100 ${fb.status === 'Unread' ? 'border-danger' : ''} ${fb.priority === 'High' ? 'border-warning border-2' : ''}`}>
+                      <Card.Header className="d-flex justify-content-between align-items-center">
+                        <div className="d-flex align-items-center gap-2">
+                          <strong>{fb.subject}</strong>
+                          <Badge bg={
+                            fb.priority === 'High' ? 'danger' :
+                            fb.priority === 'Medium' ? 'warning' : 'success'
+                          }>
+                            {fb.priority}
+                          </Badge>
+                        </div>
+                        {getStatusBadge(fb.status)}
+                      </Card.Header>
+                      <Card.Body>
+                        <p className="mb-2">{fb.message}</p>
+                        <small className="text-muted">
+                          From: <strong>{fb.user_name}</strong> | {new Date(fb.created_at).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </small>
+                      </Card.Body>
+                      <Card.Footer className="d-flex gap-2">
+                        {fb.status === 'Unread' && (
+                          <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => updateFeedbackStatus(fb.id, 'In Review')}
+                            disabled={loading}
+                          >
+                            Mark as Read
+                          </Button>
+                        )}
+                        {fb.status === 'In Review' && (
+                          <Button
+                            variant="outline-success"
+                            size="sm"
+                            onClick={() => updateFeedbackStatus(fb.id, 'Read')}
+                            disabled={loading}
+                          >
+                            Mark as Resolved
+                          </Button>
+                        )}
+                        {fb.status === 'Read' && (
+                          <Button
+                            variant="outline-warning"
+                            size="sm"
+                            onClick={() => updateFeedbackStatus(fb.id, 'In Review')}
+                            disabled={loading}
+                          >
+                            Reopen
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => deleteFeedback(fb.id)}
+                          disabled={loading}
+                        >
+                          Delete
+                        </Button>
+                      </Card.Footer>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            ) : (
+              <Alert variant="info" className="text-center py-5">
+                <h5>No feedback available</h5>
+                <p className="mb-0">
+                  No user feedback has been received yet.
+                </p>
+              </Alert>
+            )}
+          </>
+        );
+
+      default:
+        return (
+          <Alert variant="warning" className="text-center py-5">
+            <h5>Section not found</h5>
+            <p className="mb-0">Please select a valid section from the sidebar.</p>
+          </Alert>
+        );
+    }
+  };
 
   return (
-    <div className="d-flex" style={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
-      <div style={{ width: "250px", background: "#d3cbc7" }} className="p-3 d-flex flex-column justify-content-between">
-        <div>
-          <Button className="w-100 mb-2 text-start" variant={activeView === "dashboard" ? "dark" : "outline-secondary"} onClick={() => setActiveView("dashboard")}>📊 Dashboard</Button>
-          <Button className="w-100 mb-2 text-start" variant={activeView === "registered" ? "dark" : "outline-secondary"} onClick={() => setActiveView("registered")}>📝 Registered</Button>
-          <Button className="w-100 mb-2 text-start" variant={activeView === "tax" ? "dark" : "outline-secondary"} onClick={() => setActiveView("tax")}>📈 Tax Report</Button>
-          <Button className="w-100 mb-2 text-start" variant={activeView === "feedback" ? "dark" : "outline-secondary"} onClick={() => setActiveView("feedback")}>💬 Feedback</Button>
+    <>
+      {/* Mobile Header */}
+      <div
+        className="d-block d-md-none text-white px-3 py-3"
+        style={{ background: "linear-gradient(to right, #d16ba5, #86a8e7)" }}
+      >
+        <div className="d-flex justify-content-between align-items-center">
+          <div>
+            <div className="fw-bold">ADMIN PANEL</div>
+            <small>System Administrator</small>
+          </div>
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              background: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#333",
+              fontWeight: "bold"
+            }}
+          >
+            A
+          </div>
         </div>
-        <div>
-          <Button className="w-100 mb-2 text-start" variant="secondary" onClick={() => setActiveView("settings")}>⚙️ Settings</Button>
-          <Button className="w-100 text-start" style={{ backgroundColor: "#e9f4eb" }} onClick={handleLogout}>⬅️ Logout</Button>
+        <div className="d-flex justify-content-around mt-3">
+          <Button
+            size="sm"
+            variant={activeSection === "overview" ? "secondary" : "light"}
+            onClick={() => setActiveSection("overview")}
+          >
+            Overview
+          </Button>
+          <Button
+            size="sm"
+            variant={activeSection === "users" ? "secondary" : "light"}
+            onClick={() => setActiveSection("users")}
+          >
+            Users
+          </Button>
+          <Button
+            size="sm"
+            variant={activeSection === "transactions" ? "secondary" : "light"}
+            onClick={() => setActiveSection("transactions")}
+          >
+            Transactions
+          </Button>
+          <Button
+            size="sm"
+            variant={activeSection === "feedback" ? "secondary" : "light"}
+            onClick={() => setActiveSection("feedback")}
+          >
+            Feedback
+          </Button>
         </div>
       </div>
 
-      <div className="flex-grow-1 p-4">
-        {activeView === "dashboard" && renderDashboard()}
-        {activeView === "registered" && renderRegisteredUsers()}
-        {activeView === "tax" && renderTaxReports()}
-        {activeView === "feedback" && renderFeedback()}
-        {activeView === "settings" && renderSettings()}
+      {/* Main Layout */}
+      <div className="d-flex flex-column flex-md-row" style={{ minHeight: "80vh", maxHeight: "90vh" }}>
+        {/* Sidebar for desktop */}
+        <div
+          className="d-none d-md-flex flex-column"
+          style={{
+            width: "280px",
+            backgroundColor: "#f8f9fa",
+            borderRight: "1px solid #dee2e6",
+            padding: "1.5rem",
+          }}
+        >
+          <div className="d-flex align-items-center mb-4">
+            <div
+              style={{
+                width: "50px",
+                height: "50px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
+                fontWeight: "bold",
+                fontSize: "1.2rem",
+                marginRight: "12px"
+              }}
+            >
+              A
+            </div>
+            <div>
+              <h6 className="mb-0">Admin Panel</h6>
+              <small className="text-muted">System Administrator</small>
+            </div>
+          </div>
+          
+          <h5 className="mb-4">Dashboard</h5>
+          <ListGroup variant="flush">
+            <ListGroup.Item
+              action
+              active={activeSection === "overview"}
+              onClick={() => setActiveSection("overview")}
+              className="d-flex justify-content-between align-items-center"
+            >
+              📊 Overview
+              {stats.pendingTransactions + stats.unreadFeedback > 0 && (
+                <Badge bg="danger" pill>
+                  {stats.pendingTransactions + stats.unreadFeedback}
+                </Badge>
+              )}
+            </ListGroup.Item>
+            <ListGroup.Item
+              action
+              active={activeSection === "users"}
+              onClick={() => setActiveSection("users")}
+              className="d-flex justify-content-between align-items-center"
+            >
+              👥 Users
+              <Badge bg="primary" pill>{stats.totalUsers}</Badge>
+            </ListGroup.Item>
+            <ListGroup.Item
+              action
+              active={activeSection === "transactions"}
+              onClick={() => setActiveSection("transactions")}
+              className="d-flex justify-content-between align-items-center"
+            >
+              💳 Transactions
+              {stats.pendingTransactions > 0 && (
+                <Badge bg="warning" pill>{stats.pendingTransactions}</Badge>
+              )}
+            </ListGroup.Item>
+            <ListGroup.Item
+              action
+              active={activeSection === "feedback"}
+              onClick={() => setActiveSection("feedback")}
+              className="d-flex justify-content-between align-items-center"
+            >
+              💬 Feedback
+              {stats.unreadFeedback > 0 && (
+                <Badge bg="danger" pill>{stats.unreadFeedback}</Badge>
+              )}
+            </ListGroup.Item>
+          </ListGroup>
+
+          {/* Quick Stats in Sidebar */}
+          <div className="mt-4 pt-4 border-top">
+            <h6 className="text-muted">Quick Stats</h6>
+            <div className="small">
+              <div className="d-flex justify-content-between mb-2">
+                <span>Active Users:</span>
+                <strong className="text-success">{stats.activeUsers}</strong>
+              </div>
+              <div className="d-flex justify-content-between mb-2">
+                <span>Today's Revenue:</span>
+                <strong className="text-success">KES {(stats.totalRevenue * 0.1).toLocaleString()}</strong>
+              </div>
+              <div className="d-flex justify-content-between mb-2">
+                <span>Pending Items:</span>
+                <strong className="text-warning">{stats.pendingTransactions + stats.unreadFeedback}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-grow-1 bg-white" style={{ overflowY: "auto" }}>
+          <Container className="py-4">
+            {/* Alert Messages */}
+            {success && (
+              <Alert
+                variant="success"
+                onClose={() => setSuccess(null)}
+                dismissible
+              >
+                {success}
+              </Alert>
+            )}
+            {error && (
+              <Alert
+                variant="danger"
+                onClose={() => setError(null)}
+                dismissible
+              >
+                {error}
+              </Alert>
+            )}
+            
+            {renderContent()}
+          </Container>
+        </div>
       </div>
-    </div>
+
+      {/* User Modal */}
+      <Modal show={showModal && modalType === "user"} onHide={closeModal} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>{selectedItem ? 'Edit User' : 'Add New User'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Full Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={userForm.full_name}
+                    onChange={(e) => setUserForm({...userForm, full_name: e.target.value})}
+                    placeholder="Enter full name"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control
+                    type="email"
+                    value={userForm.email}
+                    onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                    placeholder="Enter email address"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Phone Number</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={userForm.phone}
+                    onChange={(e) => setUserForm({...userForm, phone: e.target.value})}
+                    placeholder="e.g., 254700123456"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Business Type</Form.Label>
+                  <Form.Select
+                    value={userForm.business_type}
+                    onChange={(e) => setUserForm({...userForm, business_type: e.target.value})}
+                    required
+                  >
+                    <option value="">Select Business Type</option>
+                    <option value="Fresh products trader">Fresh products trader</option>
+                    <option value="Livestock and meat">Livestock and meat</option>
+                    <option value="Fish vendor">Fish vendor</option>
+                    <option value="Clothes and textile">Clothes and textile</option>
+                    <option value="Household goods">Household goods</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Status</Form.Label>
+                  <Form.Select
+                    value={userForm.status}
+                    onChange={(e) => setUserForm({...userForm, status: e.target.value})}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={closeModal}>
+            Cancel
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={createOrUpdateUser}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Spinner as="span" animation="border" size="sm" className="me-2" />
+                {selectedItem ? 'Updating...' : 'Creating...'}
+              </>
+            ) : (
+              selectedItem ? 'Update User' : 'Create User'
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 };
 
