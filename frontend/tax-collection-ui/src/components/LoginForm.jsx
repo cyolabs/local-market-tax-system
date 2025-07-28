@@ -28,7 +28,7 @@ export default function LoginForm({ onSubmit }) {
 
   return (
     <div
-      className="p-3 p-sm-4 mx-2 mx-sm-auto"
+      className="p-4"
       style={{
         backgroundColor: '#ffffff',
         color: '#333',
@@ -38,14 +38,10 @@ export default function LoginForm({ onSubmit }) {
         width: '100%',
       }}
     >
+
       <form onSubmit={handleSubmit}>
-        {/* Username Input */}
         <div className="mb-3 position-relative">
-          <PersonFill 
-            className="position-absolute ms-2 text-muted"
-            size={16}
-            style={{ top: '12px', left: '0' }}
-          />
+          <PersonFill className="position-absolute top-50 start-0 translate-middle-y ms-2 text-muted" />
           <input
             type="text"
             name="username"
@@ -54,22 +50,13 @@ export default function LoginForm({ onSubmit }) {
             required
             onChange={handleChange}
             autoComplete="username"
-            className="form-control ps-4 ps-sm-5"
-            style={{ 
-              backgroundColor: '#f8f9fa',
-              fontSize: '16px', // Prevents zoom on iOS
-              minHeight: '44px' // Better touch target
-            }}
+            className="form-control ps-5"
+            style={{ backgroundColor: '#f8f9fa' }}
           />
         </div>
 
-        {/* Password Input */}
         <div className="mb-3 position-relative">
-          <LockFill 
-            className="position-absolute ms-2 text-muted"
-            size={16}
-            style={{ top: '12px', left: '0' }}
-          />
+          <LockFill className="position-absolute top-50 start-0 translate-middle-y ms-2 text-muted" />
           <input
             type="password"
             name="password"
@@ -78,17 +65,12 @@ export default function LoginForm({ onSubmit }) {
             required
             onChange={handleChange}
             autoComplete="current-password"
-            className="form-control ps-4 ps-sm-5"
-            style={{ 
-              backgroundColor: '#f8f9fa',
-              fontSize: '16px', // Prevents zoom on iOS
-              minHeight: '44px' // Better touch target
-            }}
+            className="form-control ps-5"
+            style={{ backgroundColor: '#f8f9fa' }}
           />
         </div>
 
-        {/* Remember Me & Forgot Password */}
-        <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2 gap-sm-0">
+        <div className="d-flex justify-content-between align-items-center mb-3">
           <div className="form-check">
             <input
               type="checkbox"
@@ -97,22 +79,16 @@ export default function LoginForm({ onSubmit }) {
               name="remember"
               checked={formData.remember}
               onChange={handleChange}
-              style={{ minWidth: '16px', minHeight: '16px' }} // Better touch target
             />
-            <label className="form-check-label text-secondary ms-1" htmlFor="remember">
+            <label className="form-check-label text-secondary" htmlFor="remember">
               Remember me
             </label>
           </div>
-          <a 
-            href="#" 
-            className="text-decoration-none small text-secondary"
-            style={{ minHeight: '44px', lineHeight: '44px' }} // Better touch target
-          >
+          <a href="#" className="text-decoration-none small text-secondary">
             Forgot password?
           </a>
         </div>
 
-        {/* Login Button */}
         <button
           type="submit"
           className="btn w-100"
@@ -120,9 +96,6 @@ export default function LoginForm({ onSubmit }) {
             backgroundColor: '#b30000', // Deep red
             color: '#fff',
             fontWeight: 'bold',
-            minHeight: '48px', // Better touch target for mobile
-            fontSize: '16px', // Consistent sizing
-            borderRadius: '6px'
           }}
         >
           Login

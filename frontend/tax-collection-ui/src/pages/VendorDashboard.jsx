@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { submitFeedback,getUserFeedback, getTaxHistory } from "../services/api";
+import { submitFeedback, getTaxHistory } from "../services/api";
 import {
   Container,
   Row,
@@ -322,43 +322,23 @@ const fetchTransactions = async (filters = {}) => {
     fetchTransactions();
   };
 
-const handleFeedbackSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (!feedbackSubject.trim() || !feedbackMessage.trim()) {
-    setError("Please fill in both subject and message fields.");
-    return;
-  }
-  
-  try {
-    setLoading(true);
-    setError(null);
-    
-    console.log('Submitting feedback:', { feedbackSubject, feedbackMessage });
-    
-    const result = await submitFeedback(feedbackSubject, feedbackMessage);
-    
-    console.log('Feedback result:', result);
-    
-    if (result.success) {
-      setFeedbackSuccess(result.message || "Thank you for your feedback!");
-      setFeedbackSubject("");
-      setFeedbackMessage("");
-      
-      // Refresh feedback history
-      // fetchFeedbackHistory();
-      
-      setTimeout(() => setFeedbackSuccess(""), 5000);
-    } else {
-      setError(result.message || "Failed to submit feedback");
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const result = await submitFeedback(feedbackSubject, feedbackMessage);
+      if (result.success) {
+        setFeedbackSuccess("Thank you for your feedback!");
+        setFeedbackSubject("");
+        setFeedbackMessage("");
+        setTimeout(() => setFeedbackSuccess(""), 3000);
+      } else {
+        setError(result.message || "Failed to submit feedback");
+      }
+    } catch (error) {
+      setError("Failed to submit feedback. Please try again.");
     }
-  } catch (error) {
-    console.error('Feedback submission error:', error);
-    setError("Failed to submit feedback. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
   const handleViewReceipt = (transaction) => {
     setSelectedTransaction(transaction);
     setShowReceipt(true);
