@@ -84,6 +84,13 @@ const initialUsers = [
     last_login: "2024-07-26T10:10:00Z"
   }
 ];
+
+const reportTypes = [
+  { id: 1, name: "User Registration Report", type: "users" },
+  { id: 2, name: "Transaction Summary Report", type: "transactions" },
+  { id: 3, name: "Revenue Analysis Report", type: "revenue" },
+  { id: 4, name: "Feedback Summary Report", type: "feedback" },
+];
 const testApiConnectivity = async () => {
   try {
     const response = await fetch("https://local-market-tax-system-7fuw.onrender.com/api/ping/");
@@ -436,8 +443,67 @@ const AdminDashboard = () => {
     pendingTransactions: transactions.filter(t => t.status === "Pending").length,
     failedTransactions: transactions.filter(t => t.status === "Failed").length,
     unreadFeedback: feedback.filter(f => f.status === "Unread").length,
-    highPriorityFeedback: feedback.filter(f => f.priority === "High").length
+    highPriorityFeedback: feedback.filter(f => f.priority === "High").length,
+    availableReports: reportTypes.length,
+    lastReportDownload: "2024-07-28"
   };
+
+  const generateMockReport = (reportType) => {
+  let csvContent = "";
+  
+  switch(reportType) {
+    case "users":
+      csvContent = "ID,Full Name,Email,Phone,Business Type,Status,Created At,Last Login\n";
+      users.forEach(user => {
+        csvContent += `${user.id},"${user.full_name}","${user.email}","${user.phone}","${user.business_type}","${user.status}","${user.created_at}","${user.last_login}"\n`;
+      });
+      break;
+      
+    case "transactions":
+      csvContent = "ID,User Name,Amount,Category,Phone,Status,M-Pesa Code,Date,Receipt Number\n";
+      transactions.forEach(txn => {
+        csvContent += `${txn.id},"${txn.user_name}",${txn.amount},"${txn.category}","${txn.phone}","${txn.status}","${txn.mpesa_code}","${txn.created_at}","${txn.receipt_number}"\n`;
+      });
+      break;
+      
+    case "revenue":
+      csvContent = "Month,Revenue,Transactions,Users\n";
+      revenueData.forEach(item => {
+        csvContent += `${item.month},${item.revenue},${item.transactions},${item.users}\n`;
+      });
+      break;
+      
+    case "feedback":
+      csvContent = "ID,User Name,Subject,Message,Status,Priority,Created At\n";
+      feedback.forEach(fb => {
+        csvContent += `${fb.id},"${fb.user_name}","${fb.subject}","${fb.message.replace(/"/g, '""')}","${fb.status}","${fb.priority}","${fb.created_at}"\n`;
+      });
+      break;
+      
+  }
+  
+  return csvContent;
+};
+
+const downloadReport = (reportType) => {
+  setLoading(true);
+  
+  setTimeout(() => {
+    const csvContent = generateMockReport(reportType);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${reportType}_report_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setLoading(false);
+    showAlert(`${reportType} report downloaded successfully`);
+  }, 1500);
+};
 
     const renderContent = () => {
     switch (activeSection) {
@@ -1068,6 +1134,106 @@ const AdminDashboard = () => {
             )}
           </>
         );
+      
+        case "reports":
+  return (
+    <>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h4 className="mb-0">Report Generation</h4>
+        <div>
+          <Badge bg="info" className="me-2">
+            CSV Format
+          </Badge>
+          <Badge bg="secondary">
+            Mock Data
+          </Badge>
+        </div>
+      </div>
+
+      <Card>
+        <Card.Body>
+          <h5 className="mb-4">Available Reports</h5>
+          <Row>
+            {reportTypes.map(report => (
+              <Col md={6} key={report.id} className="mb-4">
+                <Card className="h-100">
+                  <Card.Body>
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div>
+                        <Card.Title>{report.name}</Card.Title>
+                        <Card.Text className="text-muted small">
+                          Contains all {report.type} data in CSV format
+                        </Card.Text>
+                      </div>
+                      <Button 
+                        variant="outline-primary"
+                        onClick={() => downloadReport(report.type)}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <Spinner as="span" animation="border" size="sm" />
+                        ) : (
+                          'Download'
+                        )}
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </Card.Body>
+      </Card>
+
+      <Card className="mt-4">
+        <Card.Body>
+          <h5 className="mb-3">Custom Report</h5>
+          <Form>
+            <Row>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Report Type</Form.Label>
+                  <Form.Select>
+                    <option>Select report type</option>
+                    <option>Custom User Report</option>
+                    <option>Custom Transaction Report</option>
+                    <option>Custom Feedback Report</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Date Range</Form.Label>
+                  <Form.Select>
+                    <option>Select date range</option>
+                    <option>Last 7 days</option>
+                    <option>Last 30 days</option>
+                    <option>Last quarter</option>
+                    <option>Custom range</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Format</Form.Label>
+                  <Form.Select>
+                    <option>CSV</option>
+                    <option disabled>PDF (coming soon)</option>
+                    <option disabled>Excel (coming soon)</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+            <div className="d-flex justify-content-end">
+              <Button variant="primary" disabled>
+                Generate Custom Report
+              </Button>
+            </div>
+          </Form>
+        </Card.Body>
+      </Card>
+    </>
+  );
 
       default:
         return (
@@ -1136,6 +1302,14 @@ const AdminDashboard = () => {
           >
             Feedback
           </Button>
+          // Add this with the other mobile navigation buttons
+<Button
+  size="sm"
+  variant={activeSection === "reports" ? "secondary" : "light"}
+  onClick={() => setActiveSection("reports")}
+>
+  Reports
+</Button>
         </div>
       </div>
 
@@ -1222,6 +1396,15 @@ const AdminDashboard = () => {
               )}
             </ListGroup.Item>
           </ListGroup>
+<ListGroup.Item
+  action
+  active={activeSection === "reports"}
+  onClick={() => setActiveSection("reports")}
+  className="d-flex justify-content-between align-items-center"
+>
+  📊 Reports
+  <Badge bg="info" pill>New</Badge>
+</ListGroup.Item>
 
           {/* Quick Stats in Sidebar */}
           <div className="mt-4 pt-4 border-top">
@@ -1239,6 +1422,16 @@ const AdminDashboard = () => {
                 <span>Pending Items:</span>
                 <strong className="text-warning">{stats.pendingTransactions + stats.unreadFeedback}</strong>
               </div>
+              <div className="mt-4 pt-4 border-top">
+  <h6 className="text-muted">Quick Stats</h6>
+  <div className="small">
+    {/* ... your existing quick stats */}
+    <div className="d-flex justify-content-between mb-2">
+      <span>Available Reports:</span>
+      <strong className="text-info">{stats.availableReports}</strong>
+    </div>
+  </div>
+</div>
             </div>
           </div>
         </div>
