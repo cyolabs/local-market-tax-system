@@ -1,66 +1,28 @@
-
-// src/pages/RegisterPage.jsx - FIXED VERSION
-import React, { useState } from 'react';
+// src/pages/RegisterPage.jsx
+import React from 'react';
 import RegisterForm from '../components/RegisterForm';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
-// API Configuration
-const API_BASE_URL = 'https://local-market-tax-system-7fuw.onrender.com/api/';
-
 export default function RegisterPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-
   const handleRegister = async (data) => {
-    setIsLoading(true);
-    setError('');
-
     try {
-      console.log('📝 Attempting registration with:', { 
-        username: data.username, 
-        email: data.email 
-      });
-
-      // FIXED: Use correct API endpoint
-      const response = await fetch(`${API_BASE_URL}register/`, {
+      const response = await fetch('https://local-market-tax-system-7fuw.onrender.com/signup/', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          username: data.username,
-          email: data.email,
-          password: data.password,
-          full_name: data.full_name || data.fullName, // Handle different field names
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
       });
 
-      console.log('📡 Response status:', response.status);
-      
       const result = await response.json();
-      console.log('📦 Response data:', result);
 
-      if (response.ok && result.success) {
-        console.log('✅ Registration successful!');
-        alert('Registration successful! Please login with your credentials.');
+      if (response.ok) {
+        alert('Registration successful!');
         window.location.href = '/login';
-        
       } else {
-        // Handle API error response
-        const errorMessage = result.error || result.message || 'Registration failed';
-        setError(errorMessage);
-        alert(`Registration failed: ${errorMessage}`);
+        alert('Signup failed: ' + JSON.stringify(result));
       }
-
     } catch (error) {
-      console.error('❌ Registration error:', error);
-      const errorMessage = 'Network error. Please check your connection and try again.';
-      setError(errorMessage);
-      alert(errorMessage);
-    } finally {
-      setIsLoading(false);
+      alert('Network error. Please try again.');
     }
   };
 
@@ -100,16 +62,7 @@ export default function RegisterPage() {
           <img src="/icon.png" alt="Building Icon" className="building-icon" style={{ width: '40px' }} />
           <h2 className="fw-bold mt-2">Sign Up</h2>
         </div>
-
-        {/* Show error message */}
-        {error && (
-          <div className="alert alert-danger w-100 mb-3" role="alert">
-            {error}
-          </div>
-        )}
-
-        <RegisterForm onSubmit={handleRegister} isLoading={isLoading} />
-        
+        <RegisterForm onSubmit={handleRegister} />
         <p className="mt-3">
           Already have an account? <a href="/login" className="text-primary">Login</a>
         </p>
