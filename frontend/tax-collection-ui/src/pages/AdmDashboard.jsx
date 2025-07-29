@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import html2canvas from "html2canvas";
 import {
   Container,
   Row,
@@ -30,6 +33,8 @@ import {
   Cell,
   ResponsiveContainer
 } from "recharts";
+
+
 
 const initialUsers = [
      {
@@ -356,7 +361,6 @@ const initialTransactions = [
 ];
 
 
-
 const initialFeedback = [
   {
     id: 1,
@@ -616,6 +620,205 @@ const AdminDashboard = () => {
     lastReportDownload: "2025-07-28"
   };
 
+  
+const generatePDFReport = async (reportType) => {
+  try {
+    setLoading(true);
+    
+    const doc = new jsPDF({
+      orientation: "landscape",
+      unit: "mm"
+    });
+
+    // Title Page
+    doc.setFontSize(20);
+    doc.setTextColor(40);
+    doc.text("Local Market Tax Collection System Report", 105, 20, { align: "center" });
+    
+    doc.setFontSize(16);
+    doc.text(`Report Type: ${reportTypes.find(r => r.type === reportType)?.name || reportType}`, 
+      105, 30, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 40, { align: "center" });
+
+    // Add appropriate content based on report type
+    switch(reportType) {
+      case "users":
+        await generateUsersReport(doc);
+        break;
+      case "transactions":
+        await generateTransactionsReport(doc);
+        break;
+      case "revenue":
+        await generateRevenueReport(doc);
+        break;
+      case "feedback":
+        await generateFeedbackReport(doc);
+        break;
+      default:
+        throw new Error("Unknown report type");
+    }
+
+    // Add footer to each page
+    const pageCount = doc.internal.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(150);
+      doc.text(`Page ${i} of ${pageCount}`, 195, 145, { align: "right" });
+      doc.text("Confidential - Local Market Tax Collection System", 105, 145, { align: "center" });
+    }
+
+    doc.save(`Market_Tax_${reportType}_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+    setSuccess(`${reportType} PDF report generated successfully`);
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    setError("Failed to generate PDF report");
+  } finally {
+    setLoading(false);
+  }
+};
+
+// Helper functions for each report type
+const generateUsersReport = async (doc) => {
+  // Users statistics
+  doc.setFontSize(14);
+  doc.text("User Statistics", 20, 60);
+  doc.setFontSize(12);
+  doc.text(`- Total Users: ${users.length}`, 20, 70);
+  doc.text(`- Active Users: ${users.filter(u => u.status === "Active").length}`, 20, 80);
+  
+  // Users table
+  doc.addPage();
+  doc.setFontSize(16);
+  doc.text("User Details", 105, 20, { align: "center" });
+  
+  doc.autoTable({
+    head: [["ID", "Name", "Email", "Phone", "Business Type", "Status"]],
+    body: users.map(user => [
+      user.id,
+      user.full_name,
+      user.email,
+      user.phone,
+      user.business_type,
+      user.status
+    ]),
+    startY: 30,
+    theme: "grid",
+    headStyles: { fillColor: [41, 128, 185] }
+  });
+};
+
+const generateTransactionsReport = async (doc) => {
+  // Transaction statistics
+  doc.setFontSize(14);
+  doc.text("Transaction Statistics", 20, 60);
+  doc.setFontSize(12);
+  doc.text(`- Total Transactions: ${transactions.length}`, 20, 70);
+  doc.text(`- Completed: ${transactions.filter(t => t.status === "Completed").length}`, 20, 80);
+  doc.text(`- Pending: ${transactions.filter(t => t.status === "Pending").length}`, 20, 90);
+  doc.text(`- Failed: ${transactions.filter(t => t.status === "Failed").length}`, 20, 100);
+  
+  // Transactions table
+  doc.addPage();
+  doc.setFontSize(16);
+  doc.text("Transaction Details", 105, 20, { align: "center" });
+  
+  doc.autoTable({
+    head: [["ID", "User", "Amount", "Category", "Status", "Date"]],
+    body: transactions.map(txn => [
+      txn.id,
+      txn.user_name,
+      `KES ${txn.amount}`,
+      txn.category,
+      txn.status,
+      new Date(txn.created_at).toLocaleDateString()
+    ]),
+    startY: 30,
+    theme: "grid",
+    headStyles: { fillColor: [39, 174, 96] }
+  });
+};
+
+const generateRevenueReport = async (doc) => {
+  // Revenue statistics
+  doc.setFontSize(14);
+  doc.text("Revenue Statistics", 20, 60);
+  doc.setFontSize(12);
+  doc.text(`- Total Revenue: KES ${transactions
+    .filter(t => t.status === "Completed")
+    .reduce((sum, t) => sum + t.amount, 0)}`, 20, 70);
+  
+  // Add revenue chart
+  const revenueChart = document.getElementById("revenue-chart");
+  if (revenueChart) {
+    const canvas = await html2canvas(revenueChart);
+    const imgData = canvas.toDataURL("image/png");
+    doc.addPage();
+    doc.addImage(imgData, "PNG", 20, 20, 180, 100);
+    doc.text("Revenue & User Growth Trend", 105, 140, { align: "center" });
+  }
+  
+  // Add category chart
+  const categoryChart = document.getElementById("category-chart");
+  if (categoryChart) {
+    const canvas = await html2canvas(categoryChart);
+    const imgData = canvas.toDataURL("image/png");
+    doc.addPage();
+    doc.addImage(imgData, "PNG", 20, 20, 180, 100);
+    doc.text("Revenue by Category", 105, 140, { align: "center" });
+  }
+  
+  // Revenue data table
+  doc.addPage();
+  doc.setFontSize(16);
+  doc.text("Revenue Details", 105, 20, { align: "center" });
+  
+  doc.autoTable({
+    head: [["Month", "Revenue (KES)", "Transactions", "Users"]],
+    body: revenueData.map(item => [
+      item.month,
+      item.revenue,
+      item.transactions,
+      item.users
+    ]),
+    startY: 30,
+    theme: "grid",
+    headStyles: { fillColor: [243, 156, 18] }
+  });
+};
+
+const generateFeedbackReport = async (doc) => {
+  // Feedback statistics
+  doc.setFontSize(14);
+  doc.text("Feedback Statistics", 20, 60);
+  doc.setFontSize(12);
+  doc.text(`- Total Feedback: ${feedback.length}`, 20, 70);
+  doc.text(`- Unread: ${feedback.filter(f => f.status === "Unread").length}`, 20, 80);
+  doc.text(`- High Priority: ${feedback.filter(f => f.priority === "High").length}`, 20, 90);
+  
+  // Feedback table
+  doc.addPage();
+  doc.setFontSize(16);
+  doc.text("Feedback Details", 105, 20, { align: "center" });
+  
+  doc.autoTable({
+    head: [["ID", "User", "Subject", "Status", "Priority", "Date"]],
+    body: feedback.map(fb => [
+      fb.id,
+      fb.user_name,
+      fb.subject,
+      fb.status,
+      fb.priority,
+      new Date(fb.created_at).toLocaleDateString()
+    ]),
+    startY: 30,
+    theme: "grid",
+    headStyles: { fillColor: [155, 89, 182] }
+  });
+};
+
   const generateMockReport = (reportType) => {
   let csvContent = "";
   
@@ -744,6 +947,7 @@ const downloadReport = (reportType) => {
         </div>
       </Card.Header>
       <Card.Body>
+      <div id="revenue-chart">
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={revenueData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -788,6 +992,7 @@ const downloadReport = (reportType) => {
             />
           </LineChart>
         </ResponsiveContainer>
+      </div>
       </Card.Body>
     </Card>
   </Col>
@@ -800,6 +1005,7 @@ const downloadReport = (reportType) => {
         </Badge>
       </Card.Header>
       <Card.Body>
+        <div id="category-chart">
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
@@ -830,6 +1036,7 @@ const downloadReport = (reportType) => {
             />
           </PieChart>
         </ResponsiveContainer>
+        </div>
       </Card.Body>
     </Card>
   </Col>
@@ -1350,7 +1557,7 @@ const downloadReport = (reportType) => {
         <h4 className="mb-0">Report Generation</h4>
         <div>
           <Badge bg="info" className="me-2">
-            CSV Format
+            Multiple Formats
           </Badge>
         </div>
       </div>
@@ -1367,20 +1574,24 @@ const downloadReport = (reportType) => {
                       <div>
                         <Card.Title>{report.name}</Card.Title>
                         <Card.Text className="text-muted small">
-                          Contains all {report.type} data in CSV format
+                          Contains all {report.type} data
                         </Card.Text>
                       </div>
-                      <Button 
-                        variant="outline-primary"
-                        onClick={() => downloadReport(report.type)}
-                        disabled={loading}
-                      >
-                        {loading ? (
-                          <Spinner as="span" animation="border" size="sm" />
-                        ) : (
-                          'Download'
-                        )}
-                      </Button>
+                      <div className="d-flex flex-column gap-2">
+                        <Button 
+                          variant="outline-primary"
+                          onClick={() => downloadReport(report.type)}
+                          disabled={loading}
+                          size="sm"
+                        >
+                          {loading ? (
+                            <Spinner as="span" animation="border" size="sm" />
+                          ) : (
+                            'Download CSV'
+                          )}
+                        </Button>
+                       
+                      </div>
                     </div>
                   </Card.Body>
                 </Card>
@@ -1507,7 +1718,6 @@ const downloadReport = (reportType) => {
           >
             Feedback
           </Button>
-          // Add this with the other mobile navigation buttons
 <Button
   size="sm"
   variant={activeSection === "reports" ? "secondary" : "light"}
