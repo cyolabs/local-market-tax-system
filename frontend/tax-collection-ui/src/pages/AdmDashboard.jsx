@@ -187,7 +187,7 @@ const initialTransactions = [
   {
     id: 1,
     user_id: 1,
-    user_name: "John Doe",
+    user_name: "Mwende Wambua",
     amount: 1.00,
     category: "Fresh products trader",
     phone: "254794917386",
@@ -200,7 +200,7 @@ const initialTransactions = [
   {
     id: 2,
     user_id: 2,
-    user_name: "Mary Smith",
+    user_name: "Kamau Njoroge",
     amount: 1.00,
     category: "Livestock and meat",
     phone: "254707418744",
@@ -213,7 +213,7 @@ const initialTransactions = [
   {
     id: 3,
     user_id: 1,
-    user_name: "John Doe",
+    user_name: "Mwende Wambua",
     amount: 1.00,
     category: "Fresh products trader",
     phone: "254794917386",
@@ -226,7 +226,7 @@ const initialTransactions = [
   {
     id: 4,
     user_id: 2,
-    user_name: "Mary Smith",
+    user_name: "Kamau Njoroge",
     amount: 0.00,
     category: "Livestock and meat",
     phone: "254707418744",
@@ -239,7 +239,7 @@ const initialTransactions = [
   {
     id: 5,
     user_id: 1,
-    user_name: "John Doe",
+    user_name: "Mwende Wambua",
     amount: 1.00,
     category: "Fresh products trader",
     phone: "254794917386",
@@ -252,7 +252,7 @@ const initialTransactions = [
   {
     id: 6,
     user_id: 2,
-    user_name: "Mary Smith",
+    user_name: "Kamau Njoroge",
     amount: 1.00,
     category: "Livestock and meat",
     phone: "254707418744",
@@ -265,7 +265,7 @@ const initialTransactions = [
   {
     id: 7,
     user_id: 1,
-    user_name: "John Doe",
+    user_name: "Mwende Wambua",
     amount: 1.00,
     category: "Fresh products trader",
     phone: "254794917386",
@@ -278,7 +278,7 @@ const initialTransactions = [
   {
     id: 8,
     user_id: 2,
-    user_name: "Mary Smith",
+    user_name: "Kamau Njoroge",
     amount: 1.00,
     category: "Livestock and meat",
     phone: "254707418744",
@@ -291,7 +291,7 @@ const initialTransactions = [
   {
     id: 9,
     user_id: 1,
-    user_name: "John Doe",
+    user_name: "Mwende Wambua",
     amount: 1.00,
     category: "Fresh products trader",
     phone: "254794917386",
@@ -304,7 +304,7 @@ const initialTransactions = [
   {
     id: 10,
     user_id: 1,
-    user_name: "John Doe",
+    user_name: "Mwende Wambua",
     amount: 1.00,
     category: "Fresh products trader",
     phone: "254794917386",
@@ -317,7 +317,7 @@ const initialTransactions = [
   {
     id: 11,
     user_id: 1,
-    user_name: "John Doe",
+    user_name: "Mwende Wambua",
     amount: 1.00,
     category: "Fresh products trader",
     phone: "254794917386",
@@ -330,7 +330,7 @@ const initialTransactions = [
   {
     id: 12,
     user_id: 1,
-    user_name: "John Doe",
+    user_name: "Mwende Wambua",
     amount: 1.00,
     category: "Fresh products trader",
     phone: "254794917386",
@@ -343,7 +343,7 @@ const initialTransactions = [
   {
     id: 13,
     user_id: 2,
-    user_name: "Mary Smith",
+    user_name: "Kamau Njoroge",
     amount: 1.00,
     category: "Livestock and meat",
     phone: "254707418744",
@@ -354,6 +354,7 @@ const initialTransactions = [
     checkout_id: "ws_CO_280720250946541707418744"
   }
 ];
+
 
 
 const initialFeedback = [
